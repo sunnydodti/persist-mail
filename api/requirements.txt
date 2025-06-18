@@ -1,6 +1,0 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-SQLAlchemy
-pydantic
-email-validator # For EmailStr validation
