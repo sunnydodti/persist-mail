@@ -43,14 +43,12 @@ async def get_emails(
 
     # Update last accessed
     db_mailbox.last_accessed = db.func.now()
-    db.commit()
-
-    # Initialize email service
+    db.commit()    # Initialize email service
     email_service = EmailService(
         db_mailbox.domain.imap_host,
         db_mailbox.domain.imap_port,
-        mailbox,
-        db_mailbox.domain.credentials_key
+        mailbox,  # Full email address as IMAP username
+        db_mailbox.domain.credentials_key  # Shared secret
     )
     
     # Fetch emails

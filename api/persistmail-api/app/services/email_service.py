@@ -8,15 +8,14 @@ from email.header import decode_header
 import base64
 
 class EmailService:
-    def __init__(self, imap_host: str, imap_port: int, email: str, password: str):
+    def __init__(self, imap_host: str, imap_port: int, email: str, shared_secret: str):
         self.imap_host = imap_host
         self.imap_port = imap_port
-        self.email = email
-        self.password = password
-
-    async def connect(self) -> IMAPClient:
+        self.email = email  # This will be used as the IMAP username
+        self.shared_secret = shared_secret  # Common password for all mailboxes    async def connect(self) -> IMAPClient:
         server = IMAPClient(self.imap_host, port=self.imap_port, use_uid=True)
-        server.login(self.email, self.password)
+        # Use the full email address as username and shared secret as password
+        server.login(self.email, self.shared_secret)
         return server
 
     async def fetch_emails(self, hours: int = 24, limit: int = 25) -> List[EmailList]:

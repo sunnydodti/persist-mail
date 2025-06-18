@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     
     # Database Settings
     DATABASE_URL: str = "sqlite:///./persistmail.db"
+      # Mail Server Settings
+    MAIL_DOMAIN: str = ""         # e.g., example.com
+    IMAP_HOST: str = ""          # e.g., imap.example.com
+    IMAP_PORT: int = 993
+    IMAP_SECRET: str = ""        # Common password for all mailboxes
+    IS_PREMIUM_DOMAIN: bool = False
     
     # Email Settings
     DEFAULT_HOURS_RETENTION: int = 24
