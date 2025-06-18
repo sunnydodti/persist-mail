@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 from app.db.session import get_db
 from app.models import models, schemas
@@ -39,11 +40,11 @@ async def get_emails(
         db_mailbox = models.Mailbox(email=mailbox, domain_id=domain.id)
         db.add(db_mailbox)
         db.commit()
-        db.refresh(db_mailbox)
-
-    # Update last accessed
-    db_mailbox.last_accessed = db.func.now()
-    db.commit()    # Initialize email service
+        db.refresh(db_mailbox)    # Update last accessed
+    db_mailbox.last_accessed = func.now()
+    db.commit()    
+    print(f"Domain config: {db_mailbox.domain.domain}, Host: {db_mailbox.domain.imap_host}, Port: {db_mailbox.domain.imap_port}")
+    # Initialize email service
     email_service = EmailService(
         db_mailbox.domain.imap_host,
         db_mailbox.domain.imap_port,

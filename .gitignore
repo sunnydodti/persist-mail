@@ -1,2 +1,12 @@
 *.pem
 credentials/
+__init__.py
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info
+*.log
+*.sqlite3
+*.db
