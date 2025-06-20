@@ -1,4 +1,4 @@
-@echo "off"
+@echo off
 setlocal
 
 :: Parse command line arguments
@@ -39,23 +39,24 @@ if "%API_KEY%"=="" (
 
 :: Test health endpoint
 echo "Testing health endpoint..."
-curl -X GET http://%EC2_HOST%:5000/health
+curl -s -X GET http://%EC2_HOST%:5000/health
 echo.
 echo.
 
 :: Test creating a mailbox
 echo "Testing mailbox creation..."
-curl -X POST -H "X-API-Key: %API_KEY%" http://%EC2_HOST%:5000/mailbox/testuser
+curl -s -X POST -H "X-API-Key: %API_KEY%" http://%EC2_HOST%:5000/mailbox/testuser
 echo.
 echo.
 
 :: Test with invalid API key
 echo "Testing with invalid API key..."
-curl -X POST -H "X-API-Key: invalid-key" http://%EC2_HOST%:5000/mailbox/testuser
+curl -s -X POST -H "X-API-Key: invalid-key" http://%EC2_HOST%:5000/mailbox/testuser
 echo.
 echo.
 
 :: Test with invalid username
 echo "Testing with invalid username..."
-curl -X POST -H "X-API-Key: %API_KEY%" http://%EC2_HOST%:5000/mailbox/test@invalid
+curl -s -X POST -H "X-API-Key: %API_KEY%" http://%EC2_HOST%:5000/mailbox/test@invalid
+echo.
 echo.

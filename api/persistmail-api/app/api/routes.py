@@ -5,6 +5,7 @@ from typing import List
 from app.db.session import get_db
 from app.models import models, schemas
 from app.services.email_service import EmailService
+from app.services.mailbox_service import MailboxService
 from app.core.config import settings
 import random
 import string
@@ -27,8 +28,7 @@ async def get_emails(
     """
     Retrieve emails for a given mailbox.
     If mailbox doesn't exist, it will be created automatically.
-    """
-    # Check if mailbox exists, if not create it
+    """    # Check if mailbox exists, if not create it
     db_mailbox = db.query(models.Mailbox).filter(models.Mailbox.email == mailbox).first()
     if not db_mailbox:
         # Get the first active domain
@@ -36,11 +36,22 @@ async def get_emails(
         if not domain:
             raise HTTPException(status_code=500, detail="No active domains available")
         
-        # Create new mailbox
+        # Create mailbox on the mail server
+        mailbox_service = MailboxService(
+            smtp_host=domain.imap_host.replace('imap.', 'smtp.'),  # Convert IMAP host to SMTP host
+            smtp_port=465,  # Standard SSL SMTP port
+            admin_email=settings.ADMIN_EMAIL,
+            admin_password=settings.ADMIN_PASSWORD
+        )
+        
+        # This will create the mailbox by sending a welcome email
+        await mailbox_service.create_mailbox(mailbox)
+        
+        # Create mailbox record in database
         db_mailbox = models.Mailbox(email=mailbox, domain_id=domain.id)
         db.add(db_mailbox)
         db.commit()
-        db.refresh(db_mailbox)    # Update last accessed
+        db.refresh(db_mailbox)# Update last accessed
     db_mailbox.last_accessed = func.now()
     db.commit()    
     print(f"Domain config: {db_mailbox.domain.domain}, Host: {db_mailbox.domain.imap_host}, Port: {db_mailbox.domain.imap_port}")

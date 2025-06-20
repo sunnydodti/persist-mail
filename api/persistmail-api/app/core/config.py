@@ -14,11 +14,14 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.CORS_ORIGINS_STR.split(",")]
     
     # Database Settings
-    DATABASE_URL: str = "sqlite:///./persistmail.db"
-      # Mail Server Settings
+    DATABASE_URL: str = "sqlite:///./persistmail.db"    # Mail Server Settings
     MAIL_DOMAIN: str = ""         # e.g., example.com
     IMAP_HOST: str = ""          # e.g., imap.example.com
     IMAP_PORT: int = 993
+    SMTP_HOST: str = ""          # e.g., smtp.example.com
+    SMTP_PORT: int = 465
+    ADMIN_EMAIL: str = ""        # Admin email for creating mailboxes
+    ADMIN_PASSWORD: str = ""     # Admin password
     IMAP_SECRET: str = ""        # Common password for all mailboxes
     IS_PREMIUM_DOMAIN: bool = False
     

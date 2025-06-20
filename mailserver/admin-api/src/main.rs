@@ -38,10 +38,11 @@ async fn create_mailbox(username: web::Path<String>, req: HttpRequest) -> HttpRe
                 message: None,
             });
         }
-    };
-
-    if req.headers().get("X-API-Key").map_or("", |h| h.to_str().unwrap_or("")) != api_key {
-        error!("Invalid API key attempt");
+    };    let received_api_key = req.headers().get("X-API-Key").map_or("", |h| h.to_str().unwrap_or("")).trim();
+    let api_key = api_key.trim();
+    info!("API key check - Expected length: {}, Received length: {}", api_key.len(), received_api_key.len());
+    if received_api_key != api_key {
+        error!("Invalid API key attempt - key mismatch");
         return HttpResponse::Forbidden().json(Response {
             status: "error".to_string(),
             error: Some("forbidden".to_string()),
