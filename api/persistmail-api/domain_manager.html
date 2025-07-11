@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PersistMail Domain Manager</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 30px; }
+        .section { margin-bottom: 40px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 6px; }
+        .section h2 { margin-top: 0; color: #555; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input, select { width: 100%; max-width: 300px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        .domains-list { margin-top: 20px; }
+        .domain-item { padding: 15px; border: 1px solid #e0e0e0; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .domain-info { flex: 1; }
+        .domain-actions { display: flex; gap: 10px; }
+        .status { padding: 4px 8px; border-radius: 3px; font-size: 0.8em; font-weight: bold; }
+        .status.active { background: #d4edda; color: #155724; }
+        .status.inactive { background: #f8d7da; color: #721c24; }
+        .status.premium { background: #fff3cd; color: #856404; }
+        .result { margin-top: 15px; padding: 10px; border-radius: 4px; }
+        .result.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .result.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏃‍♂️ PersistMail Domain Manager</h1>
+        
+        <div class="section">
+            <h2>Server Configuration</h2>
+            <div class="form-group">
+                <label>API Server URL:</label>
+                <input type="text" id="serverUrl" value="http://localhost:8000" placeholder="http://your-server:8000">
+                <button onclick="testConnection()">Test Connection</button>
+            </div>
+            <div id="connectionResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>Add New Domain</h2>
+            <div class="form-group">
+                <label>Domain Name:</label>
+                <input type="text" id="newDomain" placeholder="temp.example.com">
+            </div>
+            <div class="form-group">
+                <label>IMAP Host:</label>
+                <input type="text" id="imapHost" placeholder="mail.example.com">
+            </div>
+            <div class="form-group">
+                <label>IMAP Port:</label>
+                <input type="number" id="imapPort" value="993">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="isPremium"> Premium Domain
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="isMailcow" checked> Mailcow Managed
+                </label>
+            </div>
+            <button onclick="addDomain()">Add Domain</button>
+            <div id="addResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>Manage Domains</h2>
+            <button onclick="loadDomains()">Refresh Domains</button>
+            <div id="domainsList" class="domains-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let apiBase = '';
+
+        function getServerUrl() {
+            return document.getElementById('serverUrl').value.replace(/\/$/, '');
+        }
+
+        async function testConnection() {
+            const serverUrl = getServerUrl();
+            const resultDiv = document.getElementById('connectionResult');
+            
+            try {
+                const response = await fetch(`${serverUrl}/health`);
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'healthy') {
+                    resultDiv.innerHTML = '<div class="result success">✅ Connection successful!</div>';
+                    apiBase = serverUrl;
+                } else {
+                    resultDiv.innerHTML = '<div class="result error">❌ Server not responding correctly</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Connection failed: ${error.message}</div>`;
+            }
+        }
+
+        async function addDomain() {
+            const domain = document.getElementById('newDomain').value;
+            const imapHost = document.getElementById('imapHost').value;
+            const imapPort = parseInt(document.getElementById('imapPort').value);
+            const isPremium = document.getElementById('isPremium').checked;
+            const isMailcow = document.getElementById('isMailcow').checked;
+            const resultDiv = document.getElementById('addResult');
+
+            if (!domain || !imapHost) {
+                resultDiv.innerHTML = '<div class="result error">❌ Please fill in domain and IMAP host</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${getServerUrl()}/api/v1/admin/domains`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        domain,
+                        imap_host: imapHost,
+                        imap_port: imapPort,
+                        is_premium: isPremium,
+                        is_mailcow_managed: isMailcow
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<div class="result success">✅ Domain "${domain}" added successfully!</div>`;
+                    
+                    // Clear form
+                    document.getElementById('newDomain').value = '';
+                    document.getElementById('imapHost').value = '';
+                    
+                    // Refresh domains list
+                    loadDomains();
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<div class="result error">❌ Failed to add domain: ${error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadDomains() {
+            const listDiv = document.getElementById('domainsList');
+            listDiv.innerHTML = '<p>Loading domains...</p>';
+
+            try {
+                const response = await fetch(`${getServerUrl()}/api/v1/admin/domains`);
+                
+                if (response.ok) {
+                    const domains = await response.json();
+                    
+                    if (domains.length === 0) {
+                        listDiv.innerHTML = '<p>No domains configured yet.</p>';
+                        return;
+                    }
+
+                    const domainsHtml = domains.map(domain => `
+                        <div class="domain-item">
+                            <div class="domain-info">
+                                <strong>${domain.domain}</strong><br>
+                                <small>${domain.imap_host}:${domain.imap_port}</small><br>
+                                <span class="status ${domain.is_active ? 'active' : 'inactive'}">${domain.is_active ? 'Active' : 'Inactive'}</span>
+                                ${domain.is_premium ? '<span class="status premium">Premium</span>' : ''}
+                                ${domain.is_mailcow_managed ? '📧' : '📪'}
+                            </div>
+                            <div class="domain-actions">
+                                ${domain.is_active ? 
+                                    `<button class="danger" onclick="deactivateDomain('${domain.domain}')">Deactivate</button>` :
+                                    `<button onclick="activateDomain('${domain.domain}')">Activate</button>`
+                                }
+                            </div>
+                        </div>
+                    `).join('');
+
+                    listDiv.innerHTML = domainsHtml;
+                } else {
+                    listDiv.innerHTML = `<div class="result error">❌ Failed to load domains</div>`;
+                }
+            } catch (error) {
+                listDiv.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function deactivateDomain(domain) {
+            if (!confirm(`Are you sure you want to deactivate "${domain}"?`)) return;
+
+            try {
+                const response = await fetch(`${getServerUrl()}/api/v1/admin/domains/${domain}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadDomains(); // Refresh the list
+                } else {
+                    alert('Failed to deactivate domain');
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function activateDomain(domain) {
+            try {
+                const response = await fetch(`${getServerUrl()}/api/v1/admin/domains/${domain}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: true })
+                });
+
+                if (response.ok) {
+                    loadDomains(); // Refresh the list
+                } else {
+                    alert('Failed to activate domain');
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        // Load domains on page load
+        window.onload = () => {
+            testConnection();
+            setTimeout(loadDomains, 1000);
+        };
+    </script>
+</body>
+</html>
