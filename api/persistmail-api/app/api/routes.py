@@ -27,40 +27,76 @@ async def get_emails(
 ):
     """
     Retrieve emails for a given mailbox.
-    If mailbox doesn't exist, it will be created automatically.
-    """    # Check if mailbox exists, if not create it
+    If mailbox doesn't exist, it will be created automatically using Mailcow API.
+    """
+    # Check if mailbox exists in database
     db_mailbox = db.query(models.Mailbox).filter(models.Mailbox.email == mailbox).first()
+    
     if not db_mailbox:
-        # Get the first active domain
-        domain = db.query(models.Domain).filter(models.Domain.is_active == True).first()
+        # Get domain from email
+        domain_name = mailbox.split('@')[1]
+        
+        # Check if domain exists in database
+        domain = db.query(models.Domain).filter(
+            models.Domain.domain == domain_name,
+            models.Domain.is_active == True
+        ).first()
+        
         if not domain:
-            raise HTTPException(status_code=500, detail="No active domains available")
+            raise HTTPException(status_code=500, detail=f"Domain {domain_name} not configured")
         
-        # Create mailbox on the mail server
-        mailbox_service = MailboxService(
-            smtp_host=domain.imap_host.replace('imap.', 'smtp.'),  # Convert IMAP host to SMTP host
-            smtp_port=465,  # Standard SSL SMTP port
-            admin_email=settings.ADMIN_EMAIL,
-            admin_password=settings.ADMIN_PASSWORD
-        )
+        # Create mailbox using Mailcow API
+        mailbox_service = MailboxService()
         
-        # This will create the mailbox by sending a welcome email
-        await mailbox_service.create_mailbox(mailbox)
-        
-        # Create mailbox record in database
-        db_mailbox = models.Mailbox(email=mailbox, domain_id=domain.id)
-        db.add(db_mailbox)
-        db.commit()
-        db.refresh(db_mailbox)# Update last accessed
+        try:
+            mailbox_result = await mailbox_service.create_mailbox(mailbox, domain_name)
+            
+            # Create mailbox record in database
+            db_mailbox = models.Mailbox(
+                email=mailbox,
+                domain_id=domain.id,
+                password=mailbox_result["password"],
+                quota_mb=mailbox_result["quota"],
+                mailcow_managed=True
+            )
+            
+            # Set expiration time
+            db_mailbox.set_expiry(settings.MAILBOX_EXPIRY_HOURS)
+            
+            db.add(db_mailbox)
+            db.commit()
+            db.refresh(db_mailbox)
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to create mailbox: {str(e)}"
+            )
+    
+    # Check if mailbox is expired
+    if db_mailbox.is_expired():
+        raise HTTPException(status_code=410, detail="Mailbox has expired")
+    
+    # Update last accessed time
     db_mailbox.last_accessed = func.now()
-    db.commit()    
+    db.commit()
+    
+    # Determine which authentication method to use
+    if db_mailbox.mailcow_managed and db_mailbox.password:
+        # Use individual password for Mailcow-managed mailboxes
+        auth_password = db_mailbox.password
+    else:
+        # Fallback to shared secret for legacy mailboxes
+        auth_password = db_mailbox.domain.credentials_key
+    
     print(f"Domain config: {db_mailbox.domain.domain}, Host: {db_mailbox.domain.imap_host}, Port: {db_mailbox.domain.imap_port}")
+    
     # Initialize email service
     email_service = EmailService(
         db_mailbox.domain.imap_host,
         db_mailbox.domain.imap_port,
         mailbox,  # Full email address as IMAP username
-        db_mailbox.domain.credentials_key  # Shared secret
+        auth_password  # Individual password or shared secret
     )
     
     # Fetch emails
@@ -78,12 +114,22 @@ async def get_email_detail(
     db_mailbox = db.query(models.Mailbox).filter(models.Mailbox.email == mailbox).first()
     if not db_mailbox:
         raise HTTPException(status_code=404, detail="Mailbox not found")
+    
+    # Check if mailbox is expired
+    if db_mailbox.is_expired():
+        raise HTTPException(status_code=410, detail="Mailbox has expired")
+    
+    # Determine authentication method
+    if db_mailbox.mailcow_managed and db_mailbox.password:
+        auth_password = db_mailbox.password
+    else:
+        auth_password = db_mailbox.domain.credentials_key
 
     email_service = EmailService(
         db_mailbox.domain.imap_host,
         db_mailbox.domain.imap_port,
         mailbox,
-        db_mailbox.domain.credentials_key
+        auth_password
     )
     
     email_detail = await email_service.get_email(message_id)

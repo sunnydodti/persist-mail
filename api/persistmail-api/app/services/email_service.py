@@ -10,11 +10,11 @@ from email.header import decode_header
 import base64
 
 class EmailService:
-    def __init__(self, imap_host: str, imap_port: int, email: str, shared_secret: str):
+    def __init__(self, imap_host: str, imap_port: int, email: str, password: str):
         self.imap_host = imap_host
         self.imap_port = imap_port
-        self.email = email  # This will be used as the IMAP username
-        self.shared_secret = shared_secret  # Common password for all mailboxes
+        self.email = email  # Full email address as IMAP username
+        self.password = password  # Individual mailbox password (from Mailcow)
         self._server = None
 
     async def connect(self) -> IMAPClient:
@@ -35,7 +35,7 @@ class EmailService:
             )
             
             print(f"Connected. Attempting to login with email: {self.email}")
-            server.login(self.email, self.shared_secret)
+            server.login(self.email, self.password)
             print("Login successful")
             
             self._server = server
