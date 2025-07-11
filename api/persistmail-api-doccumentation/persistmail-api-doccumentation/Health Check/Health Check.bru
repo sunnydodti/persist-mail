@@ -1,0 +1,27 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{api_base}}/health
+  body: none
+  auth: none
+}
+
+docs {
+  # Health Check Endpoint
+  
+  Check if the API is running and healthy.
+  
+  ## Response
+  ```json
+  {
+    "status": "healthy"
+  }
+  ```
+  
+  ## Status Codes
+  - 200: API is healthy and running
+}

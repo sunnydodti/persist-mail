@@ -1,0 +1,85 @@
+meta {
+  name: Get Usage Statistics
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{api_base}}/api/v1/analytics/usage?period=30d
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+params:query {
+  period: 30d
+}
+
+docs {
+  # Get Usage Statistics
+  
+  Retrieve detailed usage statistics for the authenticated user.
+  
+  ## Headers
+  - `Authorization`: Bearer token from login
+  
+  ## Query Parameters
+  - `period` (string, optional): Time period for statistics (7d, 30d, 90d, 1y) (default: 30d)
+  
+  ## Response
+  ```json
+  {
+    "period": "30d",
+    "generated_at": "2025-07-11T15:00:00Z",
+    "summary": {
+      "total_mailboxes_created": 45,
+      "total_emails_retrieved": 1250,
+      "total_api_calls": 2100,
+      "average_mailbox_lifetime_hours": 18.5
+    },
+    "daily_breakdown": [
+      {
+        "date": "2025-07-11",
+        "mailboxes_created": 3,
+        "emails_retrieved": 85,
+        "api_calls": 120
+      }
+    ],
+    "quota_usage": {
+      "current_plan": "premium",
+      "emails_per_request_limit": 50,
+      "emails_per_request_used": 42,
+      "api_calls_limit": 1000,
+      "api_calls_used": 756,
+      "reset_date": "2025-08-11T10:00:00Z"
+    },
+    "popular_domains": [
+      {
+        "domain": "temp.example.com",
+        "usage_count": 32,
+        "percentage": 71.1
+      },
+      {
+        "domain": "premium.example.com",
+        "usage_count": 13,
+        "percentage": 28.9
+      }
+    ]
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 401: Unauthorized
+  - 400: Invalid period parameter
+  - 500: Server error
+  
+  ## Notes
+  - Requires user authentication
+  - Data aggregated by day
+  - Quota limits based on subscription plan
+  - Popular domains show user preferences
+}

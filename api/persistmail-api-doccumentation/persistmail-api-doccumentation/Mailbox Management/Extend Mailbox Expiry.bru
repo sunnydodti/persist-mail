@@ -1,0 +1,60 @@
+meta {
+  name: Extend Mailbox Expiry
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{api_base}}/api/v1/mailbox/test@example.com/extend
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "additional_hours": 24
+  }
+}
+
+docs {
+  # Extend Mailbox Expiry
+  
+  Extend the expiration time of a temporary mailbox (premium feature).
+  
+  ## Path Parameters
+  - `mailbox` (string, required): Email address of the mailbox
+  
+  ## Request Body
+  ```json
+  {
+    "additional_hours": 24
+  }
+  ```
+  
+  ## Request Fields
+  - `additional_hours` (integer, required): Hours to add to current expiry (max: 48)
+  
+  ## Response
+  ```json
+  {
+    "email": "test@example.com",
+    "old_expires_at": "2025-07-12T10:00:00Z",
+    "new_expires_at": "2025-07-13T10:00:00Z",
+    "additional_hours": 24,
+    "total_lifetime_hours": 48
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Expiry extended successfully
+  - 400: Invalid extension request
+  - 403: Premium feature required
+  - 404: Mailbox not found
+  - 409: Mailbox already expired
+  
+  ## Notes
+  - Premium feature (requires subscription)
+  - Maximum total lifetime varies by plan
+  - Cannot extend already expired mailboxes
+  - Extension is immediate
+}

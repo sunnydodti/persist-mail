@@ -1,0 +1,61 @@
+meta {
+  name: Get Email Detail
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{api_base}}/api/v1/email/123?mailbox=test@example.com
+  body: none
+  auth: none
+}
+
+params:query {
+  mailbox: test@example.com
+}
+
+docs {
+  # Get Email Detail
+  
+  Retrieve detailed information about a specific email, including full content and attachments.
+  
+  ## Path Parameters
+  - `message_id` (string, required): Unique identifier of the email message
+  
+  ## Query Parameters
+  - `mailbox` (string, required): Email address of the mailbox containing the email
+  
+  ## Response
+  ```json
+  {
+    "id": "123",
+    "subject": "Test Email",
+    "sender": "sender@example.com",
+    "recipients": ["test@example.com"],
+    "received_date": "2025-07-11T10:30:00Z",
+    "body_text": "Plain text content of the email",
+    "body_html": "<html><body>HTML content of the email</body></html>",
+    "attachments": [
+      {
+        "filename": "document.pdf",
+        "size": 1024,
+        "content_type": "application/pdf"
+      }
+    ],
+    "headers": {
+      "Message-ID": "<message-id@example.com>",
+      "Return-Path": "sender@example.com"
+    }
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 404: Email or mailbox not found
+  - 500: Mail server connection error
+  
+  ## Notes
+  - Attachments are returned as metadata only (filename, size, type)
+  - Full attachment download requires separate endpoint
+  - HTML content is sanitized for security
+}

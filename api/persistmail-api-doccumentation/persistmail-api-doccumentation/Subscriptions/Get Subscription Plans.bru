@@ -1,0 +1,82 @@
+meta {
+  name: Get Subscription Plans
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{api_base}}/api/v1/subscriptions/plans
+  body: none
+  auth: none
+}
+
+docs {
+  # Get Available Subscription Plans
+  
+  Retrieve all available subscription plans and their features.
+  
+  ## Response
+  ```json
+  [
+    {
+      "id": "free",
+      "name": "Free Tier",
+      "price": 0,
+      "billing_period": null,
+      "features": {
+        "max_emails_per_request": 25,
+        "max_retention_hours": 24,
+        "premium_domains": false,
+        "ad_free": false,
+        "api_rate_limit": 60,
+        "support_level": "community"
+      },
+      "limitations": [
+        "Public domains only",
+        "Ads displayed",
+        "24-hour retention only"
+      ]
+    },
+    {
+      "id": "premium",
+      "name": "Premium",
+      "price": 4.99,
+      "billing_period": "month",
+      "features": {
+        "max_emails_per_request": 50,
+        "max_retention_hours": 72,
+        "premium_domains": true,
+        "ad_free": true,
+        "api_rate_limit": 1000,
+        "support_level": "priority"
+      },
+      "limitations": []
+    },
+    {
+      "id": "pro",
+      "name": "Professional",
+      "price": 9.99,
+      "billing_period": "month",
+      "features": {
+        "max_emails_per_request": 100,
+        "max_retention_hours": 168,
+        "premium_domains": true,
+        "ad_free": true,
+        "api_rate_limit": 5000,
+        "support_level": "priority",
+        "custom_domains": true
+      },
+      "limitations": []
+    }
+  ]
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 500: Server error
+  
+  ## Notes
+  - Public endpoint, no authentication required
+  - Prices in USD
+  - Features subject to change
+}

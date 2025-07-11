@@ -1,0 +1,26 @@
+meta {
+  name: Quick API Test
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{api_base}}/
+  body: none
+  auth: none
+}
+
+tests {
+  test("API is healthy", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.have.property('status', 'healthy');
+  });
+}
+
+docs {
+  # Quick API Test
+  
+  A simple test to verify the API is running and responding correctly.
+  
+  This endpoint should always return a 200 status with `{"status": "healthy"}`.
+}

@@ -1,0 +1,65 @@
+meta {
+  name: User Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{api_base}}/api/v1/users/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "user@example.com",
+    "password": "secure_password"
+  }
+}
+
+docs {
+  # User Login
+  
+  Authenticate user and receive access token.
+  
+  ## Request Body
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "secure_password"
+  }
+  ```
+  
+  ## Request Fields
+  - `email` (string, required): User's email address
+  - `password` (string, required): User's password
+  
+  ## Response
+  ```json
+  {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "token_type": "bearer",
+    "expires_in": 3600,
+    "user": {
+      "id": 123,
+      "email": "user@example.com",
+      "name": "John Doe",
+      "subscription": {
+        "plan": "premium",
+        "expires_at": "2025-08-11T10:00:00Z"
+      }
+    }
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Login successful
+  - 401: Invalid credentials
+  - 429: Too many login attempts
+  - 500: Server error
+  
+  ## Notes
+  - Token expires in 1 hour by default
+  - Include token in Authorization header for protected endpoints
+  - Failed attempts are rate limited
+}

@@ -1,0 +1,83 @@
+meta {
+  name: Subscribe to Plan
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{api_base}}/api/v1/subscriptions/subscribe
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "plan_id": "premium",
+    "payment_method": "stripe_card_token",
+    "billing_cycle": "monthly"
+  }
+}
+
+docs {
+  # Subscribe to Premium Plan
+  
+  Subscribe user to a premium plan with payment processing.
+  
+  ## Headers
+  - `Authorization`: Bearer token from login
+  
+  ## Request Body
+  ```json
+  {
+    "plan_id": "premium",
+    "payment_method": "stripe_card_token",
+    "billing_cycle": "monthly"
+  }
+  ```
+  
+  ## Request Fields
+  - `plan_id` (string, required): Plan identifier (premium, pro)
+  - `payment_method` (string, required): Stripe payment method token
+  - `billing_cycle` (string, optional): "monthly" or "yearly" (default: monthly)
+  
+  ## Response
+  ```json
+  {
+    "subscription_id": "sub_1234567890",
+    "plan": {
+      "id": "premium",
+      "name": "Premium",
+      "price": 4.99
+    },
+    "status": "active",
+    "current_period_start": "2025-07-11T10:00:00Z",
+    "current_period_end": "2025-08-11T10:00:00Z",
+    "next_billing_date": "2025-08-11T10:00:00Z",
+    "features": {
+      "max_emails_per_request": 50,
+      "max_retention_hours": 72,
+      "premium_domains": true,
+      "ad_free": true,
+      "api_rate_limit": 1000
+    }
+  }
+  ```
+  
+  ## Status Codes
+  - 201: Subscription created successfully
+  - 400: Invalid payment method or plan
+  - 401: Unauthorized
+  - 402: Payment failed
+  - 409: User already has active subscription
+  - 500: Server error
+  
+  ## Notes
+  - Requires valid authentication
+  - Payment processed via Stripe
+  - Immediate activation upon successful payment
+  - Yearly billing offers discount
+}

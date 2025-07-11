@@ -1,0 +1,70 @@
+meta {
+  name: Update Domain
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{api_base}}/api/v1/admin/domains/example.com
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "imap_host": "new-imap.example.com",
+    "imap_port": 993,
+    "is_active": false
+  }
+}
+
+docs {
+  # Update Domain Configuration
+  
+  Update an existing domain's configuration settings.
+  
+  ## Path Parameters
+  - `domain` (string, required): Domain name to update
+  
+  ## Request Body
+  ```json
+  {
+    "imap_host": "new-imap.example.com",
+    "imap_port": 993,
+    "credentials_key": "new_shared_secret",
+    "is_premium": true,
+    "is_active": false
+  }
+  ```
+  
+  ## Request Fields (all optional)
+  - `imap_host` (string): New IMAP server hostname
+  - `imap_port` (integer): New IMAP server port
+  - `credentials_key` (string): New shared secret for authentication
+  - `is_premium` (boolean): Update premium status
+  - `is_active` (boolean): Enable/disable domain
+  
+  ## Response
+  ```json
+  {
+    "id": 1,
+    "domain": "example.com",
+    "imap_host": "new-imap.example.com",
+    "imap_port": 993,
+    "is_premium": true,
+    "is_active": false,
+    "created_at": "2025-07-11T10:00:00Z"
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Domain updated successfully
+  - 404: Domain not found
+  - 400: Invalid data provided
+  - 500: Server error
+  
+  ## Notes
+  - Only provided fields are updated
+  - Deactivating a domain affects existing mailboxes
+  - Admin privileges required
+}

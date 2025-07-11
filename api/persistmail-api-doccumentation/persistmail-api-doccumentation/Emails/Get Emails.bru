@@ -1,0 +1,53 @@
+meta {
+  name: Get Emails
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{api_base}}/api/v1/emails/test@example.com?hours=24&limit=25
+  body: none
+  auth: none
+}
+
+params:query {
+  hours: 24
+  limit: 25
+}
+
+docs {
+  # Get Emails for Mailbox
+  
+  Retrieve emails for a specific mailbox. If the mailbox doesn't exist, it will be created automatically.
+  
+  ## Path Parameters
+  - `mailbox` (string, required): Email address of the mailbox
+  
+  ## Query Parameters
+  - `hours` (integer, optional): Hours of email retention to fetch (default: 24, max: 72)
+  - `limit` (integer, optional): Maximum number of emails to return (default: 25, max: 50)
+  
+  ## Response
+  ```json
+  [
+    {
+      "id": "123",
+      "subject": "Test Email",
+      "sender": "sender@example.com",
+      "received_date": "2025-07-11T10:30:00Z",
+      "has_attachments": false,
+      "snippet": "This is a preview of the email content..."
+    }
+  ]
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 404: Mailbox not found
+  - 500: Mail server connection error
+  
+  ## Notes
+  - Mailboxes are created automatically on first access
+  - Emails are fetched in real-time from the mail server
+  - Large attachments may affect performance
+}

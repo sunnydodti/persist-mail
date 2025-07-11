@@ -1,0 +1,57 @@
+meta {
+  name: Get System Status
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{api_base}}/api/v1/analytics/system
+  body: none
+  auth: none
+}
+
+docs {
+  # Get System Status
+  
+  Retrieve public system status and performance metrics.
+  
+  ## Response
+  ```json
+  {
+    "status": "operational",
+    "timestamp": "2025-07-11T15:00:00Z",
+    "uptime_percentage": 99.95,
+    "response_times": {
+      "api_avg_ms": 120,
+      "email_fetch_avg_ms": 850,
+      "mailbox_creation_avg_ms": 300
+    },
+    "active_domains": 5,
+    "total_active_mailboxes": 1250,
+    "total_emails_processed_today": 15600,
+    "mailcow_status": {
+      "status": "healthy",
+      "version": "2024.07",
+      "last_checked": "2025-07-11T14:55:00Z"
+    },
+    "rate_limits": {
+      "anonymous_per_minute": 60,
+      "authenticated_per_minute": 1000
+    },
+    "maintenance": {
+      "scheduled": false,
+      "next_window": "2025-07-15T02:00:00Z"
+    }
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 500: Server error
+  
+  ## Notes
+  - Public endpoint, no authentication required
+  - Real-time system metrics
+  - Mailcow integration status
+  - Maintenance schedule information
+}

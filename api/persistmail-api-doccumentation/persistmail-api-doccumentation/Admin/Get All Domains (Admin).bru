@@ -1,0 +1,54 @@
+meta {
+  name: Get All Domains (Admin)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{api_base}}/api/v1/admin/domains
+  body: none
+  auth: none
+}
+
+docs {
+  # Get All Domains (Admin)
+  
+  Retrieve all domains in the system, including inactive ones. Admin-only endpoint.
+  
+  ## Response
+  ```json
+  [
+    {
+      "id": 1,
+      "domain": "temp.example.com",
+      "imap_host": "imap.example.com",
+      "imap_port": 993,
+      "is_premium": false,
+      "is_active": true,
+      "created_at": "2025-07-11T10:00:00Z",
+      "mailbox_count": 150
+    },
+    {
+      "id": 2,
+      "domain": "premium.example.com",
+      "imap_host": "imap.premium.com",
+      "imap_port": 993,
+      "is_premium": true,
+      "is_active": false,
+      "created_at": "2025-07-10T10:00:00Z",
+      "mailbox_count": 25
+    }
+  ]
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 401: Unauthorized (admin authentication required)
+  - 500: Server error
+  
+  ## Notes
+  - Shows both active and inactive domains
+  - Includes mailbox count for each domain
+  - Admin privileges required
+  - Contains sensitive configuration data
+}

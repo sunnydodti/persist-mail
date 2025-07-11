@@ -1,0 +1,61 @@
+meta {
+  name: Get User Profile
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{api_base}}/api/v1/users/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  # Get User Profile
+  
+  Retrieve current user's profile information and subscription details.
+  
+  ## Headers
+  - `Authorization`: Bearer token from login
+  
+  ## Response
+  ```json
+  {
+    "id": 123,
+    "email": "user@example.com",
+    "name": "John Doe",
+    "created_at": "2025-07-11T10:00:00Z",
+    "subscription": {
+      "plan": "premium",
+      "expires_at": "2025-08-11T10:00:00Z",
+      "features": {
+        "max_emails_per_request": 50,
+        "max_retention_hours": 72,
+        "premium_domains": true,
+        "ad_free": true,
+        "api_rate_limit": 1000
+      }
+    },
+    "usage_stats": {
+      "total_mailboxes_created": 156,
+      "total_emails_retrieved": 2350,
+      "current_month_usage": 89
+    },
+    "api_key": "pm_1234567890abcdef"
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 401: Unauthorized (invalid or expired token)
+  - 500: Server error
+  
+  ## Notes
+  - Requires valid authentication token
+  - Shows real-time usage statistics
+  - API key for programmatic access
+}

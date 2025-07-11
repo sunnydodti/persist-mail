@@ -1,0 +1,68 @@
+meta {
+  name: Create Domain
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{api_base}}/api/v1/admin/domains
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "domain": "new.example.com",
+    "imap_host": "imap.new.example.com",
+    "imap_port": 993,
+    "credentials_key": "shared_secret_key",
+    "is_premium": false
+  }
+}
+
+docs {
+  # Create New Domain
+  
+  Add a new email domain configuration to the system.
+  
+  ## Request Body
+  ```json
+  {
+    "domain": "new.example.com",
+    "imap_host": "imap.new.example.com",
+    "imap_port": 993,
+    "credentials_key": "shared_secret_key",
+    "is_premium": false
+  }
+  ```
+  
+  ## Request Fields
+  - `domain` (string, required): Domain name (e.g., "temp.example.com")
+  - `imap_host` (string, required): IMAP server hostname
+  - `imap_port` (integer, required): IMAP server port (usually 993 for SSL)
+  - `credentials_key` (string, required): Shared secret for mailbox authentication
+  - `is_premium` (boolean, optional): Whether this is a premium domain (default: false)
+  
+  ## Response
+  ```json
+  {
+    "id": 3,
+    "domain": "new.example.com",
+    "imap_host": "imap.new.example.com",
+    "imap_port": 993,
+    "is_premium": false,
+    "is_active": true,
+    "created_at": "2025-07-11T10:00:00Z"
+  }
+  ```
+  
+  ## Status Codes
+  - 201: Domain created successfully
+  - 400: Domain already exists or invalid data
+  - 500: Server error
+  
+  ## Notes
+  - Domain names must be unique
+  - IMAP configuration is validated on creation
+  - Admin privileges required (authentication to be implemented)
+}

@@ -1,0 +1,41 @@
+meta {
+  name: Delete Mailbox
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{api_base}}/api/v1/mailbox/test@example.com
+  body: none
+  auth: none
+}
+
+docs {
+  # Delete Temporary Mailbox
+  
+  Immediately delete a temporary mailbox and all its contents.
+  
+  ## Path Parameters
+  - `mailbox` (string, required): Email address of the mailbox to delete
+  
+  ## Response
+  ```json
+  {
+    "message": "Mailbox test@example.com deleted successfully",
+    "deleted_at": "2025-07-11T15:00:00Z",
+    "emails_deleted": 12,
+    "quota_freed_mb": 15.2
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Mailbox deleted successfully
+  - 404: Mailbox not found
+  - 500: Mailcow API error
+  
+  ## Notes
+  - This action is irreversible
+  - All emails and attachments are permanently deleted
+  - Mailbox is removed from Mailcow immediately
+  - Quota is freed instantly
+}

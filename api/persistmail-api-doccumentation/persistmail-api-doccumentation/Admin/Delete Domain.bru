@@ -1,0 +1,40 @@
+meta {
+  name: Delete Domain
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{api_base}}/api/v1/admin/domains/example.com
+  body: none
+  auth: none
+}
+
+docs {
+  # Delete Domain
+  
+  Remove a domain from the system. This will also remove all associated mailboxes.
+  
+  ## Path Parameters
+  - `domain` (string, required): Domain name to delete
+  
+  ## Response
+  ```json
+  {
+    "message": "Domain example.com deleted successfully",
+    "deleted_mailboxes": 5
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Domain deleted successfully
+  - 404: Domain not found
+  - 409: Cannot delete domain with active mailboxes (if protection enabled)
+  - 500: Server error
+  
+  ## Notes
+  - This action is irreversible
+  - All mailboxes under this domain will be deleted
+  - Admin privileges required
+  - Consider deactivating instead of deleting for data preservation
+}

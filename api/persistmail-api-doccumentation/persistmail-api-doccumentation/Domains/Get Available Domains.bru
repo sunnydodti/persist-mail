@@ -1,0 +1,46 @@
+meta {
+  name: Get Available Domains
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{api_base}}/api/v1/domains
+  body: none
+  auth: none
+}
+
+docs {
+  # Get Available Domains
+  
+  Retrieve list of all active domains available for creating temporary mailboxes.
+  
+  ## Response
+  ```json
+  [
+    {
+      "id": 1,
+      "domain": "temp.example.com",
+      "is_premium": false,
+      "is_active": true,
+      "created_at": "2025-07-11T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "domain": "premium.example.com",
+      "is_premium": true,
+      "is_active": true,
+      "created_at": "2025-07-11T10:00:00Z"
+    }
+  ]
+  ```
+  
+  ## Status Codes
+  - 200: Success
+  - 500: Database or server error
+  
+  ## Notes
+  - Only active domains are returned
+  - Premium domains may require subscription
+  - Domain availability affects mailbox creation
+}

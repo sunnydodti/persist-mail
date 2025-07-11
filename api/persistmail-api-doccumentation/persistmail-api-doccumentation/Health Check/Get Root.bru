@@ -1,0 +1,27 @@
+meta {
+  name: Get Root
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{api_base}}/
+  body: none
+  auth: none
+}
+
+docs {
+  # API Root Endpoint
+  
+  Welcome message for the PersistMail API.
+  
+  ## Response
+  ```json
+  {
+    "message": "Welcome to PersistMail API"
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Success
+}

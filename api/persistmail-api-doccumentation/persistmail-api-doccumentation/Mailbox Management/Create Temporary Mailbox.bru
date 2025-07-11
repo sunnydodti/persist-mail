@@ -1,0 +1,69 @@
+meta {
+  name: Create Temporary Mailbox
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{api_base}}/api/v1/mailbox
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "domain": "temp.example.com",
+    "prefix": "custom-name",
+    "expiry_hours": 24,
+    "quota_mb": 50
+  }
+}
+
+docs {
+  # Create Temporary Mailbox (Mailcow Integration)
+  
+  Create a new temporary mailbox using Mailcow API integration.
+  
+  ## Request Body
+  ```json
+  {
+    "domain": "temp.example.com",
+    "prefix": "custom-name",
+    "expiry_hours": 24,
+    "quota_mb": 50
+  }
+  ```
+  
+  ## Request Fields
+  - `domain` (string, optional): Preferred domain (if not specified, auto-selected)
+  - `prefix` (string, optional): Custom prefix for mailbox name (if not specified, random)
+  - `expiry_hours` (integer, optional): Hours until mailbox expires (default: 24, max: 72)
+  - `quota_mb` (integer, optional): Mailbox quota in MB (default: 50, max: 100)
+  
+  ## Response
+  ```json
+  {
+    "email": "custom-name-abc123@temp.example.com",
+    "password": "randomly-generated-password",
+    "created_at": "2025-07-11T10:00:00Z",
+    "expires_at": "2025-07-12T10:00:00Z",
+    "quota_mb": 50,
+    "domain_info": {
+      "domain": "temp.example.com",
+      "is_premium": false
+    }
+  }
+  ```
+  
+  ## Status Codes
+  - 201: Mailbox created successfully
+  - 400: Invalid request data
+  - 429: Rate limit exceeded
+  - 500: Mailcow API error
+  
+  ## Notes
+  - Mailbox is created immediately in Mailcow
+  - Password is generated automatically for security
+  - Mailbox auto-expires based on configured time
+  - Premium domains may require subscription
+}

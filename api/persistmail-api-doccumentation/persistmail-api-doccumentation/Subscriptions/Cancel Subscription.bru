@@ -1,0 +1,68 @@
+meta {
+  name: Cancel Subscription
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{api_base}}/api/v1/subscriptions/cancel
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "reason": "Too expensive",
+    "immediate": false
+  }
+}
+
+docs {
+  # Cancel Subscription
+  
+  Cancel user's premium subscription with optional immediate termination.
+  
+  ## Headers
+  - `Authorization`: Bearer token from login
+  
+  ## Request Body
+  ```json
+  {
+    "reason": "Too expensive",
+    "immediate": false
+  }
+  ```
+  
+  ## Request Fields
+  - `reason` (string, optional): Cancellation reason for feedback
+  - `immediate` (boolean, optional): Cancel immediately vs. end of billing period (default: false)
+  
+  ## Response
+  ```json
+  {
+    "subscription_id": "sub_1234567890",
+    "status": "cancelled",
+    "cancelled_at": "2025-07-11T15:00:00Z",
+    "ends_at": "2025-08-11T10:00:00Z",
+    "immediate": false,
+    "refund_amount": 0,
+    "message": "Subscription will remain active until 2025-08-11T10:00:00Z"
+  }
+  ```
+  
+  ## Status Codes
+  - 200: Subscription cancelled successfully
+  - 401: Unauthorized
+  - 404: No active subscription found
+  - 500: Server error
+  
+  ## Notes
+  - Default behavior: access continues until end of billing period
+  - Immediate cancellation may qualify for prorated refund
+  - User retains premium features until expiration
+  - Feedback helps improve service
+}
