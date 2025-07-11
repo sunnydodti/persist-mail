@@ -1,4 +1,5 @@
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{HttpResponse, http::StatusCode};
+use serde_json::json;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -16,35 +17,20 @@ pub enum ApiError {
     Internal(String),
 }
 
-impl ResponseError for ApiError {
+impl actix_web::error::ResponseError for ApiError {
     fn error_response(&self) -> HttpResponse {
-        match self {
-            ApiError::AuthenticationError => {
-                HttpResponse::Forbidden().json(json!({
-                    "status": "error",
-                    "error": "forbidden"
-                }))
-            }
-            ApiError::InvalidUsername => {
-                HttpResponse::BadRequest().json(json!({
-                    "status": "error",
-                    "error": "invalid username format"
-                }))
-            }
-            ApiError::CommandError(msg) => {
-                HttpResponse::InternalServerError().json(json!({
-                    "status": "error",
-                    "error": "command failed",
-                    "message": msg
-                }))
-            }
-            ApiError::Internal(msg) => {
-                HttpResponse::InternalServerError().json(json!({
-                    "status": "error",
-                    "error": "internal error",
-                    "message": msg
-                }))
-            }
+        let status = self.status_code();
+        HttpResponse::build(status)
+            .json(json!({
+                "error": self.to_string()
+            }))
+    }
+
+    fn status_code(&self) -> StatusCode {
+        match *self {
+            ApiError::AuthenticationError => StatusCode::FORBIDDEN,
+            ApiError::InvalidUsername => StatusCode::BAD_REQUEST,
+            ApiError::CommandError(_) | ApiError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

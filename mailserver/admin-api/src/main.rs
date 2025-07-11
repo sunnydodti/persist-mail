@@ -1,8 +1,13 @@
 use actix_web::{web, App, HttpServer, HttpResponse, HttpRequest, middleware::Logger};
+use dotenv::dotenv;
+use env_logger::Env;
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 use log::{info, error};
 use std::env;
+
+mod handlers;
+mod error;
 
 #[derive(Serialize, Deserialize)]
 struct Response {
@@ -86,19 +91,41 @@ async fn create_mailbox(username: web::Path<String>, req: HttpRequest) -> HttpRe
     }
 }
 
+async fn check_api_key(req: HttpRequest) -> Result<(), error::ApiError> {
+    let api_key = env::var("API_KEY").unwrap_or_else(|_| "default_key".to_string());
+    match req.headers().get("X-API-Key") {
+        Some(key) if key.to_str().unwrap_or("") == api_key => Ok(()),
+        _ => Err(error::ApiError::Unauthorized),
+    }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
-    let port = env::var("PORT").unwrap_or_else(|_| "5000".to_string());
-    let bind_addr = format!("0.0.0.0:{}", port);
+    dotenv().ok();
+    // Set up logging
+    env_logger::init_from_env(Env::default().default_filter_or("debug"));
+    
+    // Get API key from environment or use default for development
+    let api_key = env::var("ADMIN_API_KEY").unwrap_or_else(|_| {
+        println!("Warning: ADMIN_API_KEY not set, using default key");
+        "test-key-123".to_string()
+    });
 
-    info!("Starting server on {}", bind_addr);
-
-    HttpServer::new(|| {
+    let bind_addr = "0.0.0.0:5000";
+    println!("Starting server on {}", bind_addr);
+    
+    HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(api_key.clone()))
             .wrap(Logger::default())
-            .service(web::resource("/health").route(web::get().to(health_check)))
-            .service(web::resource("/mailbox/{username}").route(web::post().to(create_mailbox)))
+            .service(
+                web::resource("/health")
+                    .route(web::get().to(handlers::health_check))
+            )
+            .service(
+                web::resource("/mailbox/{username}")
+                    .route(web::post().to(handlers::create_mailbox))
+            )
     })
     .bind(bind_addr)?
     .run()
