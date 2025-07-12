@@ -16,21 +16,27 @@ class PersistMailApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppLogger.debug('PersistMailApp: Building widget tree');
-    
+
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) {
-          AppLogger.debug('Creating ThemeProvider');
-          return ThemeProvider();
-        }),
-        ChangeNotifierProvider(create: (_) {
-          AppLogger.debug('Creating SettingsProvider');
-          return SettingsProvider();
-        }),
-        ChangeNotifierProvider(create: (_) {
-          AppLogger.debug('Creating EmailProvider');
-          return EmailProvider();
-        }),
+        ChangeNotifierProvider(
+          create: (_) {
+            AppLogger.debug('Creating ThemeProvider');
+            return ThemeProvider();
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            AppLogger.debug('Creating SettingsProvider');
+            return SettingsProvider();
+          },
+        ),
+        ChangeNotifierProvider(
+          create: (_) {
+            AppLogger.debug('Creating EmailProvider');
+            return EmailProvider();
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
@@ -38,7 +44,7 @@ class PersistMailApp extends StatelessWidget {
             'isDarkMode': themeProvider.isDarkMode,
             'themeMode': themeProvider.themeMode.toString(),
           });
-          
+
           return MaterialApp(
             title: AppConfig.appName,
             debugShowCheckedModeBanner: false,

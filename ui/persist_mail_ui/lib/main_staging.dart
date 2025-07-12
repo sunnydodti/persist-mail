@@ -4,18 +4,34 @@ import 'package:persist_mail_ui/app.dart';
 import 'package:persist_mail_ui/base/enums.dart';
 import 'package:persist_mail_ui/config/app_config.dart';
 import 'package:persist_mail_ui/services/storage_service.dart';
+import 'package:persist_mail_ui/services/logging_service.dart';
+import 'package:persist_mail_ui/models/domain_model.dart';
+import 'package:persist_mail_ui/models/email_model.dart';
+import 'package:persist_mail_ui/models/user_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  AppLogger.info('App Starting - Staging Flavor');
+
   // Initialize Hive
+  AppLogger.debug('Initializing Hive');
   await Hive.initFlutter();
 
+  // Register Hive adapters
+  AppLogger.debug('Registering Hive Adapters');
+  Hive.registerAdapter(DomainModelAdapter());
+  Hive.registerAdapter(EmailModelAdapter());
+  Hive.registerAdapter(UserPreferencesAdapter());
+
   // Initialize storage
+  AppLogger.debug('Initializing Storage Service');
   await StorageService.init();
 
   // Set flavor for staging
   AppConfig.currentFlavor = Flavor.STG;
+  AppLogger.info('App Configuration Set', {'flavor': 'STG'});
 
+  AppLogger.info('Launching PersistMail App (Staging)');
   runApp(const PersistMailApp());
 }

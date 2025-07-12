@@ -79,13 +79,13 @@ class ApiService {
     try {
       AppLogger.debug('ApiService: Fetching domains');
       final response = await _dio.get('/domains');
-      
+
       // Debug: Log the raw response structure
       AppLogger.debug('ApiService: Raw domains response', {
         'responseType': response.data.runtimeType.toString(),
         'responseData': response.data,
       });
-      
+
       // Handle different response structures
       List<dynamic> domainsJson = [];
       if (response.data is List) {
@@ -95,23 +95,24 @@ class ApiService {
         // If response is wrapped in an object
         domainsJson = response.data['domains'] ?? response.data['data'] ?? [];
       }
-      
+
       AppLogger.debug('ApiService: Parsed domains list', {
         'domainsJsonType': domainsJson.runtimeType.toString(),
         'domainsJsonLength': domainsJson.length,
         'firstItem': domainsJson.isNotEmpty ? domainsJson.first : null,
       });
-      
-      final domains = domainsJson
-          .map((json) {
-            try {
-              return DomainModel.fromJson(json);
-            } catch (e) {
-              AppLogger.error('ApiService: Failed to parse domain - json: $json (${json.runtimeType})', e);
-              rethrow;
-            }
-          })
-          .toList();
+
+      final domains = domainsJson.map((json) {
+        try {
+          return DomainModel.fromJson(json);
+        } catch (e) {
+          AppLogger.error(
+            'ApiService: Failed to parse domain - json: $json (${json.runtimeType})',
+            e,
+          );
+          rethrow;
+        }
+      }).toList();
 
       AppLogger.info('ApiService: Domains fetched successfully', {
         'count': domains.length,
@@ -127,42 +128,21 @@ class ApiService {
     }
   }
 
-  // Generate new email address
-  Future<String> generateEmail(String domain) async {
-    final stopwatch = Stopwatch()..start();
-    try {
-      AppLogger.debug('ApiService: Generating email for domain: $domain');
-      final response = await _dio.post(
-        '/email/generate',
-        data: {'domain': domain},
-      );
-      final email = response.data['email'] ?? '';
-
-      AppLogger.info('ApiService: Email generated successfully', {
-        'domain': domain,
-        'email': email,
-        'duration': '${stopwatch.elapsedMilliseconds}ms',
-      });
-
-      return email;
-    } on DioException catch (e) {
-      AppLogger.error(
-        'ApiService: Failed to generate email for domain: $domain',
-        e,
-      );
-      throw _handleError(e);
-    } finally {
-      stopwatch.stop();
-    }
-  }
-
   // Get emails for specific email address
   Future<List<EmailModel>> getEmails(String emailAddress) async {
     final stopwatch = Stopwatch()..start();
     try {
       AppLogger.debug('ApiService: Fetching emails for: $emailAddress');
       final response = await _dio.get('/emails/$emailAddress');
-      final List<dynamic> emailsJson = response.data['emails'] ?? [];
+
+      // Handle different response structures
+      List<dynamic> emailsJson = [];
+      if (response.data is List) {
+        emailsJson = response.data as List<dynamic>;
+      } else if (response.data is Map<String, dynamic>) {
+        emailsJson = response.data['emails'] ?? response.data['data'] ?? [];
+      }
+
       final emails = emailsJson
           .map((json) => EmailModel.fromJson(json))
           .toList();
@@ -188,7 +168,7 @@ class ApiService {
   // Get specific email content
   Future<EmailModel> getEmailContent(String emailId) async {
     try {
-      final response = await _dio.get('/email/$emailId');
+      final response = await _dio.get('/emails/$emailId');
       return EmailModel.fromJson(response.data);
     } on DioException catch (e) {
       throw _handleError(e);

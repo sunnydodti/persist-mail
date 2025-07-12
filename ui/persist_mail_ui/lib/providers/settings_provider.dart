@@ -53,7 +53,7 @@ class SettingsProvider extends ChangeNotifier {
         defaultValue: true,
       );
       _maxEmails = _settingsBox.get(_maxEmailsKey, defaultValue: 15);
-      
+
       AppLogger.debug('SettingsProvider: Settings loaded', {
         'autoRefresh': _autoRefresh,
         'refreshInterval': _refreshInterval,
@@ -62,7 +62,11 @@ class SettingsProvider extends ChangeNotifier {
         'maxEmails': _maxEmails,
       });
     } catch (e, stackTrace) {
-      AppLogger.error('SettingsProvider: Failed to load settings', e, stackTrace);
+      AppLogger.error(
+        'SettingsProvider: Failed to load settings',
+        e,
+        stackTrace,
+      );
     }
   }
 
@@ -131,7 +135,11 @@ class SettingsProvider extends ChangeNotifier {
       AppLogger.info('SettingsProvider: Settings reset completed');
       notifyListeners();
     } catch (e, stackTrace) {
-      AppLogger.error('SettingsProvider: Failed to reset settings', e, stackTrace);
+      AppLogger.error(
+        'SettingsProvider: Failed to reset settings',
+        e,
+        stackTrace,
+      );
     }
   }
 

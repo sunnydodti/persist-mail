@@ -4,7 +4,7 @@ import 'package:persist_mail_ui/base/enums.dart';
 
 class AppLogger {
   static Logger? _logger;
-  
+
   // Get the singleton logger instance
   static Logger get instance {
     _logger ??= _createLogger();
@@ -50,10 +50,7 @@ class AppLogger {
       case Flavor.STG:
       case Flavor.BETA:
       case Flavor.PRD:
-        return SimplePrinter(
-          colors: false,
-          printTime: true,
-        );
+        return SimplePrinter(colors: false, printTime: true);
     }
   }
 
@@ -88,19 +85,37 @@ class AppLogger {
   }
 
   // Feature-specific logging methods
-  static void apiRequest(String method, String url, {Map<String, dynamic>? data}) {
-    debug('API Request: $method $url', _safeLogData(data));
+  static void apiRequest(
+    String method,
+    String url, {
+    Map<String, dynamic>? data,
+  }) {
+    final safeData = _safeLogData(data);
+    debug(
+      'API Request: $method $url${safeData != null ? ' - Data: $safeData' : ''}',
+    );
   }
 
-  static void apiResponse(String method, String url, int statusCode, {dynamic data}) {
+  static void apiResponse(
+    String method,
+    String url,
+    int statusCode, {
+    dynamic data,
+  }) {
     try {
+      final safeData = _safeLogData(data);
+      final message =
+          'API Response: $method $url [$statusCode]${safeData != null ? ' - Data: $safeData' : ''}';
+
       if (statusCode >= 200 && statusCode < 300) {
-        debug('API Success: $method $url [$statusCode]', _safeLogData(data));
+        debug(message);
       } else {
-        warning('API Error: $method $url [$statusCode]', _safeLogData(data));
+        warning(message);
       }
     } catch (e) {
-      debug('API Response: $method $url [$statusCode] (data logging failed: $e)');
+      debug(
+        'API Response: $method $url [$statusCode] (data logging failed: $e)',
+      );
     }
   }
 
@@ -109,7 +124,7 @@ class AppLogger {
       if (data == null) return null;
       if (data is String || data is num || data is bool) return data;
       if (data is List || data is Map) {
-        return data.toString().length > 1000 
+        return data.toString().length > 1000
             ? '${data.toString().substring(0, 1000)}...(truncated)'
             : data;
       }
@@ -119,12 +134,22 @@ class AppLogger {
     }
   }
 
-  static void navigation(String from, String to, {Map<String, dynamic>? arguments}) {
-    debug('Navigation: $from -> $to', arguments);
+  static void navigation(
+    String from,
+    String to, {
+    Map<String, dynamic>? arguments,
+  }) {
+    final argsStr = arguments != null
+        ? ' - Args: ${_safeLogData(arguments)}'
+        : '';
+    debug('Navigation: $from -> $to$argsStr');
   }
 
   static void userAction(String action, {Map<String, dynamic>? context}) {
-    info('User Action: $action', context);
+    final contextStr = context != null
+        ? ' - Context: ${_safeLogData(context)}'
+        : '';
+    info('User Action: $action$contextStr');
   }
 
   static void cacheHit(String key, {String? type}) {
@@ -135,11 +160,23 @@ class AppLogger {
     debug('Cache Miss: $key${type != null ? ' ($type)' : ''}');
   }
 
-  static void performance(String operation, Duration duration, {Map<String, dynamic>? context}) {
+  static void performance(
+    String operation,
+    Duration duration, {
+    Map<String, dynamic>? context,
+  }) {
+    final contextStr = context != null
+        ? ' - Context: ${_safeLogData(context)}'
+        : '';
+    final message =
+        'Performance: $operation took ${duration.inMilliseconds}ms$contextStr';
+
     if (duration.inMilliseconds > 1000) {
-      warning('Slow Operation: $operation took ${duration.inMilliseconds}ms', context);
+      warning(
+        'Slow Operation: $operation took ${duration.inMilliseconds}ms$contextStr',
+      );
     } else {
-      debug('Performance: $operation took ${duration.inMilliseconds}ms', context);
+      debug(message);
     }
   }
 
@@ -160,8 +197,14 @@ class AppLogger {
     debug('Refresh Started: $reason');
   }
 
-  static void refreshCompleted(String reason, int emailCount, Duration duration) {
-    info('Refresh Completed: $reason - $emailCount emails in ${duration.inMilliseconds}ms');
+  static void refreshCompleted(
+    String reason,
+    int emailCount,
+    Duration duration,
+  ) {
+    info(
+      'Refresh Completed: $reason - $emailCount emails in ${duration.inMilliseconds}ms',
+    );
   }
 
   // Theme and settings logging
@@ -170,7 +213,10 @@ class AppLogger {
   }
 
   static void settingChanged(String setting, dynamic value) {
-    userAction('Setting Changed', context: {'setting': setting, 'value': value});
+    userAction(
+      'Setting Changed',
+      context: {'setting': setting, 'value': value},
+    );
   }
 
   // Storage logging

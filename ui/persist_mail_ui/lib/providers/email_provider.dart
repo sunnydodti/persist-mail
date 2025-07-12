@@ -4,6 +4,7 @@ import '../config/app_config.dart';
 import '../models/email_model.dart';
 import '../models/domain_model.dart';
 import '../models/user_preferences.dart';
+import '../models/mailbox_history.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/logging_service.dart';
@@ -14,6 +15,7 @@ class EmailProvider extends ChangeNotifier {
   // State
   List<EmailModel> _emails = [];
   List<DomainModel> _domains = [];
+  List<MailboxHistory> _mailboxHistory = [];
   String? _selectedEmail;
   String? _selectedDomain;
   bool _isLoading = false;
@@ -27,11 +29,13 @@ class EmailProvider extends ChangeNotifier {
   // Getters
   List<EmailModel> get emails => _emails;
   List<DomainModel> get domains => _domains;
+  List<MailboxHistory> get mailboxHistory => _mailboxHistory;
   String? get selectedEmail => _selectedEmail;
   String? get selectedDomain => _selectedDomain;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasSelectedEmail => _selectedEmail != null;
+  bool get hasMailboxHistory => _mailboxHistory.isNotEmpty;
 
   EmailProvider() {
     _initializeProvider();
@@ -40,10 +44,11 @@ class EmailProvider extends ChangeNotifier {
   Future<void> _initializeProvider() async {
     try {
       AppLogger.debug('EmailProvider: Starting initialization');
-      
+
       // Load cached data
       _emails = StorageService.getCachedEmails();
       _domains = StorageService.getCachedDomains();
+      _mailboxHistory = StorageService.getCachedMailboxHistories();
 
       final prefs = StorageService.getUserPreferences();
       _selectedEmail = prefs.selectedEmail;
@@ -57,7 +62,7 @@ class EmailProvider extends ChangeNotifier {
         await fetchEmails();
         _startAutoRefresh();
       }
-      
+
       AppLogger.info('EmailProvider: Initialization completed successfully');
     } catch (e, stackTrace) {
       AppLogger.error('EmailProvider: Failed to initialize', e, stackTrace);
@@ -88,25 +93,6 @@ class EmailProvider extends ChangeNotifier {
     }
   }
 
-  // Generate new email address
-  Future<String?> generateEmail(String domain) async {
-    try {
-      AppLogger.userAction('Generate Email', context: {'domain': domain});
-      _setLoading(true);
-      final email = await _apiService.generateEmail(domain);
-      _selectedEmail = email;
-      _selectedDomain = domain;
-      await _savePreferences();
-      _clearError();
-      return email;
-    } catch (e) {
-      _setError(e.toString());
-      return null;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
   // Select existing email
   void selectEmail(String email, String domain) {
     _selectedEmail = email;
@@ -115,6 +101,34 @@ class EmailProvider extends ChangeNotifier {
     fetchEmails();
     _startAutoRefresh();
     notifyListeners();
+  }
+
+  // Select or create mailbox with username and domain
+  Future<String?> selectMailbox(String username, String domain) async {
+    try {
+      AppLogger.userAction(
+        'Select Mailbox',
+        context: {'username': username, 'domain': domain},
+      );
+      _setLoading(true);
+
+      final email = '$username@$domain';
+      _selectedEmail = email;
+      _selectedDomain = domain;
+      await _savePreferences();
+
+      // Fetch emails for this address (this will create the mailbox if it doesn't exist)
+      await fetchEmails();
+      _startAutoRefresh();
+
+      _clearError();
+      return email;
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    } finally {
+      _setLoading(false);
+    }
   }
 
   // Fetch emails for selected address

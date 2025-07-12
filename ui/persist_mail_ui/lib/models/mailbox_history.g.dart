@@ -1,50 +1,41 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'domain_model.dart';
+part of 'mailbox_history.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class DomainModelAdapter extends TypeAdapter<DomainModel> {
+class MailboxHistoryAdapter extends TypeAdapter<MailboxHistory> {
   @override
-  final int typeId = 1;
+  final int typeId = 3;
 
   @override
-  DomainModel read(BinaryReader reader) {
+  MailboxHistory read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return DomainModel(
-      id: fields[0] as int,
+    return MailboxHistory(
+      email: fields[0] as String,
       domain: fields[1] as String,
-      isActive: fields[2] as bool,
-      isPremium: fields[3] as bool,
-      isMailcowManaged: fields[4] as bool,
-      createdAt: fields[5] as DateTime,
-      lastUsed: fields[6] as DateTime?,
+      lastUsed: fields[2] as DateTime,
+      createdAt: fields[3] as DateTime,
     );
   }
 
   @override
-  void write(BinaryWriter writer, DomainModel obj) {
+  void write(BinaryWriter writer, MailboxHistory obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.id)
+      ..write(obj.email)
       ..writeByte(1)
       ..write(obj.domain)
       ..writeByte(2)
-      ..write(obj.isActive)
+      ..write(obj.lastUsed)
       ..writeByte(3)
-      ..write(obj.isPremium)
-      ..writeByte(4)
-      ..write(obj.isMailcowManaged)
-      ..writeByte(5)
-      ..write(obj.createdAt)
-      ..writeByte(6)
-      ..write(obj.lastUsed);
+      ..write(obj.createdAt);
   }
 
   @override
@@ -53,7 +44,7 @@ class DomainModelAdapter extends TypeAdapter<DomainModel> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DomainModelAdapter &&
+      other is MailboxHistoryAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

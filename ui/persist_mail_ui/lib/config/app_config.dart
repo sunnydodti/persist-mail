@@ -35,6 +35,7 @@ class AppConfig {
   static const String emailBoxName = 'emails';
   static const String preferencesBoxName = 'preferences';
   static const String domainsBoxName = 'domains';
+  static const String mailboxHistoryBoxName = 'mailbox_history';
 
   // Current flavor (to be set at app startup)
   static Flavor currentFlavor = Flavor.DEV;

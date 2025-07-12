@@ -4,6 +4,7 @@ import '../config/app_config.dart';
 import '../models/email_model.dart';
 import '../models/domain_model.dart';
 import '../models/user_preferences.dart';
+import '../models/mailbox_history.dart';
 
 class StorageService {
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
@@ -11,6 +12,7 @@ class StorageService {
   static Box<EmailModel>? _emailBox;
   static Box<DomainModel>? _domainBox;
   static Box<UserPreferences>? _preferencesBox;
+  static Box<MailboxHistory>? _mailboxHistoryBox;
 
   // Initialize Hive and register adapters
   static Future<void> init() async {
@@ -21,12 +23,16 @@ class StorageService {
     // Hive.registerAdapter(EmailModelAdapter());
     // Hive.registerAdapter(DomainModelAdapter());
     // Hive.registerAdapter(UserPreferencesAdapter());
+    // Hive.registerAdapter(MailboxHistoryAdapter());
 
     // Open boxes with dynamic types for now
     _emailBox = await Hive.openBox<EmailModel>(AppConfig.emailBoxName);
     _domainBox = await Hive.openBox<DomainModel>(AppConfig.domainsBoxName);
     _preferencesBox = await Hive.openBox<UserPreferences>(
       AppConfig.preferencesBoxName,
+    );
+    _mailboxHistoryBox = await Hive.openBox<MailboxHistory>(
+      AppConfig.mailboxHistoryBoxName,
     );
   }
 
@@ -84,6 +90,38 @@ class StorageService {
     await _preferencesBox?.clear();
   }
 
+  // Mailbox History Storage
+  static Future<void> saveMailboxHistory(MailboxHistory history) async {
+    await _mailboxHistoryBox?.put(history.email, history);
+  }
+
+  static Future<void> addMailboxToHistory(String email, String domain) async {
+    // Check if already exists and update lastUsed, or create new entry
+    MailboxHistory? existing = _mailboxHistoryBox?.get(email);
+    if (existing != null) {
+      final updated = existing.copyWith(lastUsed: DateTime.now());
+      await _mailboxHistoryBox?.put(email, updated);
+    } else {
+      final newHistory = MailboxHistory.fromEmailAndDomain(email, domain);
+      await _mailboxHistoryBox?.put(email, newHistory);
+    }
+  }
+
+  static List<MailboxHistory> getCachedMailboxHistories() {
+    final histories = _mailboxHistoryBox?.values.toList() ?? [];
+    // Sort by lastUsed (most recent first) and limit to 12
+    histories.sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
+    return histories.take(12).toList();
+  }
+
+  static MailboxHistory? getMailboxHistoryByEmail(String email) {
+    return _mailboxHistoryBox?.get(email);
+  }
+
+  static Future<void> clearMailboxHistories() async {
+    await _mailboxHistoryBox?.clear();
+  }
+
   // Secure Storage for sensitive data
   static Future<void> saveSecureData(String key, String value) async {
     await _secureStorage.write(key: key, value: value);
@@ -106,5 +144,6 @@ class StorageService {
     await _emailBox?.close();
     await _domainBox?.close();
     await _preferencesBox?.close();
+    await _mailboxHistoryBox?.close();
   }
 }
