@@ -31,10 +31,11 @@ class MailcowClient:
             quota: Mailbox quota in MB (default: 50MB)
             
         Returns:
-            Dict containing mailbox details including generated password
+            Dict containing mailbox details including shared password
         """
         local_part = email.split('@')[0]
-        password = self.generate_password()
+        # Use shared password from IMAP_SECRET instead of generating random ones
+        password = settings.IMAP_SECRET
         
         # Use the exact format from your successful Swagger test
         mailbox_data = {

@@ -52,10 +52,11 @@ async def get_emails(
             mailbox_result = await mailbox_service.create_mailbox(mailbox, domain_name)
             
             # Create mailbox record in database
+            # Store shared password (IMAP_SECRET) for consistency
             db_mailbox = models.Mailbox(
                 email=mailbox,
                 domain_id=domain.id,
-                password=mailbox_result["password"],
+                password=settings.IMAP_SECRET,  # Use shared password from config
                 quota_mb=mailbox_result["quota"],
                 mailcow_managed=True
             )
@@ -81,20 +82,16 @@ async def get_emails(
     db_mailbox.last_accessed = func.now()
     db.commit()
     
-    # Determine which authentication method to use
-    if db_mailbox.mailcow_managed and db_mailbox.password:
-        # Use individual password for Mailcow-managed mailboxes
-        auth_password = db_mailbox.password
-    else:
-        # Fallback to shared secret for legacy mailboxes
-        auth_password = db_mailbox.domain.credentials_key
+    # Always use shared secret (IMAP_SECRET) for authentication
+    # This ensures consistency and easy password rotation
+    auth_password = settings.IMAP_SECRET
     
     # Initialize email service
     email_service = EmailService(
         db_mailbox.domain.imap_host,
         db_mailbox.domain.imap_port,
         mailbox,  # Full email address as IMAP username
-        auth_password  # Individual password or shared secret
+        auth_password  # Shared secret from IMAP_SECRET
     )
     
     # Fetch emails
@@ -117,11 +114,8 @@ async def get_email_detail(
     if db_mailbox.is_expired:
         raise HTTPException(status_code=410, detail="Mailbox has expired")
     
-    # Determine authentication method
-    if db_mailbox.mailcow_managed and db_mailbox.password:
-        auth_password = db_mailbox.password
-    else:
-        auth_password = db_mailbox.domain.credentials_key
+    # Always use shared secret (IMAP_SECRET) for authentication
+    auth_password = settings.IMAP_SECRET
 
     email_service = EmailService(
         db_mailbox.domain.imap_host,
