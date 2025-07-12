@@ -52,6 +52,19 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     
+    # Network/Timeout Settings
+    IMAP_TIMEOUT_SECONDS: int = 10
+    HTTP_TIMEOUT_SECONDS: int = 30
+    ATTACHMENT_SIZE_THRESHOLD: int = 50000  # Bytes to consider email has attachments
+    EMAIL_SNIPPET_LENGTH: int = 100
+    
+    # Security Settings
+    SSL_VERIFY_CERTS: bool = False  # For self-signed certificates
+    
+    # Logging Settings
+    LOG_LEVEL: str = "INFO"
+    DEBUG: bool = False
+    
     class Config:
         case_sensitive = True
         env_file = ".env"

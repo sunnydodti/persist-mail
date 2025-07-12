@@ -22,15 +22,22 @@ class EmailService:
         try:
             # Create SSL context that accepts self-signed certificates
             context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+            
+            if not settings.SSL_VERIFY_CERTS:
+                # For self-signed certificates or test environments
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+            else:
+                # For production with valid certificates
+                context.check_hostname = True
+                context.verify_mode = ssl.CERT_REQUIRED
             
             server = IMAPClient(
                 self.imap_host,
                 port=self.imap_port,
                 ssl_context=context,
                 use_uid=True,
-                timeout=10  # Add 10 second timeout
+                timeout=settings.IMAP_TIMEOUT_SECONDS
             )
             
             server.login(self.email, self.password)
@@ -82,7 +89,6 @@ class EmailService:
                 
             return email_list
         except Exception as e:
-            print(f"Error fetching emails: {str(e)}")
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to fetch emails: {str(e)}"
@@ -96,10 +102,13 @@ class EmailService:
 
     def _has_attachments(self, msg_data: dict) -> bool:
         """Check if an email has attachments based on its size."""
-        return msg_data[b'RFC822.SIZE'] > 50000  # Arbitrary threshold
+        return msg_data[b'RFC822.SIZE'] > settings.ATTACHMENT_SIZE_THRESHOLD
 
-    def _get_snippet(self, msg_id: int, server: IMAPClient, length: int = 100) -> str:
+    def _get_snippet(self, msg_id: int, server: IMAPClient, length: Optional[int] = None) -> str:
         """Get a preview snippet of the email content."""
+        if length is None:
+            length = settings.EMAIL_SNIPPET_LENGTH
+            
         try:
             # Fetch the message body
             message = server.fetch([msg_id], ['BODY[]'])[msg_id][b'BODY[]']
@@ -113,5 +122,4 @@ class EmailService:
                     
             return "No preview available"
         except Exception as e:
-            print(f"Error getting snippet: {str(e)}")
             return "Preview not available"

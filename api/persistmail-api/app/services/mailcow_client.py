@@ -14,8 +14,10 @@ class MailcowClient:
             "Content-Type": "application/json"
         }
 
-    def generate_password(self, length: int = 16) -> str:
+    def generate_password(self, length: Optional[int] = None) -> str:
         """Generate a secure random password for mailbox."""
+        if length is None:
+            length = settings.PASSWORD_LENGTH
         chars = string.ascii_letters + string.digits + "!@#$%^&*"
         return ''.join(secrets.choice(chars) for _ in range(length))
 
@@ -50,7 +52,7 @@ class MailcowClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT_SECONDS) as client:
                 response = await client.post(
                     f"{self.api_url}/api/v1/add/mailbox",
                     json=mailbox_data,
@@ -59,7 +61,6 @@ class MailcowClient:
                 
                 if response.status_code == 200:
                     result = response.json()
-                    print(f"DEBUG: Mailcow response: {result}")  # Debug logging
                     # Check if any success responses exist
                     success_responses = [r for r in result if r.get("type") == "success"]
                     if success_responses:
