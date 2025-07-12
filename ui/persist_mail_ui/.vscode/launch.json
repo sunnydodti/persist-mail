@@ -1,0 +1,102 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter (Dev Flavor)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_dev.dart",
+            "args": [
+                "--flavor",
+                "dev"
+            ],
+            "deviceId": "2201117PI"
+        },
+        {
+            "name": "Flutter (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart"
+        },
+        {
+            "name": "Flutter (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "dev"
+            ],
+            "deviceId": "2201117PI"
+        },
+        {
+            "name": "Flutter (Release)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "dev"
+            ],
+            "deviceId": "2201117PI"
+        },
+        {
+            "name": "Flutter Web (Chrome)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "args": [
+                "--web-renderer",
+                "html"
+            ]
+        },
+        {
+            "name": "Flutter Web (Edge)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "edge",
+            "args": [
+                "--web-renderer",
+                "html"
+            ]
+        },
+        {
+            "name": "Flutter Web (CanvasKit)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "args": [
+                "--web-renderer",
+                "canvaskit"
+            ]
+        },
+        {
+            "name": "Flutter Windows",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "windows"
+        },
+        {
+            "name": "Flutter Windows (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile",
+            "program": "lib/main.dart",
+            "deviceId": "windows"
+        },
+        {
+            "name": "Flutter Windows (Release)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "program": "lib/main.dart",
+            "deviceId": "windows"
+        }
+    ]
+}

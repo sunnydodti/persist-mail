@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'base/enums.dart';
+import 'base/enums.dart' show Flavor;
 import 'base/models/flavour_config.dart' show FlavorConfig;
-import 'base/models/flavour_values.dart';
+import 'base/models/flavour_values.dart' show FlavorValues;
+import 'base/widgets/flavour_banner.dart';
 import 'ui/pages/home/home_page.dart' show HomePage;
 
 void main() {
   FlavorConfig(
-    flavor: Flavor.PRD,
+    flavor: Flavor.DEV,
     color: Colors.blue,
     values: FlavorValues(baseUrl: 'https://persist.site/dev'),
   );
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const HomePage(),
+      home: FlavorBanner(child: const HomePage()),
     );
   }
 }
