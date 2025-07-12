@@ -544,13 +544,16 @@ class _HomeTabState extends State<HomeTab> {
                     Expanded(
                       child: TextField(
                         controller: _customUsernameController,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                         decoration: InputDecoration(
                           hintText: 'Enter username',
                           border: const OutlineInputBorder(),
-                          suffixText: _selectedDomain != null
-                              ? '@$_selectedDomain'
-                              : null,
-                          suffixStyle: const TextStyle(fontFamily: 'monospace'),
+                          // helper: _getCustomUsernameHelperText(_selectedDomain),
+                          helperText: _getCustomUsernameHelperText(
+                            _selectedDomain,
+                          ),
                         ),
                         style: const TextStyle(fontFamily: 'monospace'),
                       ),
@@ -560,6 +563,7 @@ class _HomeTabState extends State<HomeTab> {
                       onPressed:
                           _selectedDomain != null &&
                               _customUsernameController.text.isNotEmpty &&
+                              _customUsernameController.text.length >= 3 &&
                               !_isGenerating
                           ? () => _selectCustomMailbox(emailProvider)
                           : null,
@@ -836,5 +840,25 @@ class _HomeTabState extends State<HomeTab> {
     Clipboard.setData(ClipboardData(text: text));
     SnackbarService.showSuccess('Copied to clipboard: $text');
     AppLogger.userAction('Email Copied', context: {'email': text});
+  }
+
+  // Widget _getCustomUsernameHelperText(String? selectedDomain) {
+  //   if (selectedDomain == null) {
+  //     return const SizedBox.shrink();
+  //   }
+  //   String text = (_customUsernameController.text.isNotEmpty)
+  //       ? '${_customUsernameController.text.trim()}@$selectedDomain'
+  //       : '<username>@$selectedDomain';
+  //   return Text(text, style: const TextStyle(fontSize: 12, color: Colors.grey));
+  // }
+
+  String _getCustomUsernameHelperText(String? selectedDomain) {
+    if (selectedDomain == null) {
+      return '';
+    }
+    String text = (_customUsernameController.text.isNotEmpty)
+        ? '${_customUsernameController.text.trim()}@$selectedDomain'
+        : '<username>@$selectedDomain';
+    return text;
   }
 }

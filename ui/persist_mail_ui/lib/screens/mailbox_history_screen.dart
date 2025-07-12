@@ -172,7 +172,7 @@ class MailboxHistoryScreen extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              'Domain: ${mailbox.domain}',
+                              mailbox.domain,
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     color: Theme.of(
