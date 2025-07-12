@@ -74,7 +74,7 @@ async def get_emails(
             )
     
     # Check if mailbox is expired
-    if db_mailbox.is_expired():
+    if db_mailbox.is_expired:
         raise HTTPException(status_code=410, detail="Mailbox has expired")
     
     # Update last accessed time
@@ -116,7 +116,7 @@ async def get_email_detail(
         raise HTTPException(status_code=404, detail="Mailbox not found")
     
     # Check if mailbox is expired
-    if db_mailbox.is_expired():
+    if db_mailbox.is_expired:
         raise HTTPException(status_code=410, detail="Mailbox has expired")
     
     # Determine authentication method

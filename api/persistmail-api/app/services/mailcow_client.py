@@ -59,6 +59,7 @@ class MailcowClient:
                 
                 if response.status_code == 200:
                     result = response.json()
+                    print(f"DEBUG: Mailcow response: {result}")  # Debug logging
                     # Check if any success responses exist
                     success_responses = [r for r in result if r.get("type") == "success"]
                     if success_responses:
@@ -72,7 +73,7 @@ class MailcowClient:
                     else:
                         # Look for error messages
                         error_msgs = [r.get("msg", []) for r in result if r.get("type") == "error"]
-                        error_text = str(error_msgs) if error_msgs else "Unknown error"
+                        error_text = str(error_msgs) if error_msgs else f"Unknown error - Full response: {result}"
                         raise HTTPException(
                             status_code=400,
                             detail=f"Mailcow API error: {error_text}"
