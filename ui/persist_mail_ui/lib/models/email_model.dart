@@ -39,16 +39,23 @@ class EmailModel extends HiveObject {
     this.htmlBody,
   });
 
-  factory EmailModel.fromJson(Map<String, dynamic> json) {
+  factory EmailModel.fromJson(
+    Map<String, dynamic> json, [
+    String? emailAddress,
+  ]) {
     return EmailModel(
-      id: json['id'] ?? '',
-      from: json['from'] ?? '',
-      to: json['to'] ?? '',
+      id: json['id']?.toString() ?? '',
+      from: json['sender'] ?? json['from'] ?? '',
+      to: emailAddress ?? json['to'] ?? '',
       subject: json['subject'] ?? '',
-      body: json['body'] ?? '',
-      receivedAt: DateTime.tryParse(json['receivedAt'] ?? '') ?? DateTime.now(),
+      body: json['snippet'] ?? json['body'] ?? '',
+      receivedAt:
+          DateTime.tryParse(
+            json['received_date'] ?? json['receivedAt'] ?? '',
+          ) ??
+          DateTime.now(),
       isRead: json['isRead'] ?? false,
-      htmlBody: json['htmlBody'],
+      htmlBody: json['htmlBody'] ?? json['html_body'],
     );
   }
 

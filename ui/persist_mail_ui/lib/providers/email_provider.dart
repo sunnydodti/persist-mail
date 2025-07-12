@@ -188,11 +188,31 @@ class EmailProvider extends ChangeNotifier {
       _setLoading(true);
       final emails = await _apiService.getEmails(_selectedEmail!);
 
+      AppLogger.debug('EmailProvider: Raw emails received', {
+        'selectedEmail': _selectedEmail,
+        'rawCount': emails.length,
+        'emails': emails
+            .map(
+              (e) => {
+                'id': e.id,
+                'to': e.to,
+                'from': e.from,
+                'subject': e.subject,
+              },
+            )
+            .toList(),
+      });
+
       // Only take the configured max emails and filter for this specific mailbox
       final filteredEmails = emails
           .where((email) => email.to == _selectedEmail)
           .take(AppConfig.maxEmailsToShow)
           .toList();
+
+      AppLogger.debug('EmailProvider: Filtered emails', {
+        'filteredCount': filteredEmails.length,
+        'maxToShow': AppConfig.maxEmailsToShow,
+      });
 
       _emails = filteredEmails;
 

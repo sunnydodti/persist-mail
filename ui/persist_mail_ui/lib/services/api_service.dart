@@ -144,7 +144,7 @@ class ApiService {
       }
 
       final emails = emailsJson
-          .map((json) => EmailModel.fromJson(json))
+          .map((json) => EmailModel.fromJson(json, emailAddress))
           .toList();
 
       AppLogger.info('ApiService: Emails fetched successfully', {
