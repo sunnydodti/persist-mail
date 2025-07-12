@@ -7,15 +7,15 @@ class AppConfig {
   static String get baseUrl {
     switch (currentFlavor) {
       case Flavor.DEV:
-        return 'http://192.168.137.160:8000';
+        return 'http://192.168.137.160:8000/api/v1';
       case Flavor.STG:
-        return 'https://staging-api.persistmail.com';
+        return 'https://staging-api.persistmail.com/api/v1';
       case Flavor.PRD:
-        return 'https://api.persistmail.com';
+        return 'https://api.persistmail.com/api/v1';
       case Flavor.ALPHA:
-        return 'http://192.168.137.160:8001';
+        return 'http://192.168.137.160:8001/api/v1';
       case Flavor.BETA:
-        return 'https://beta-api.persistmail.com';
+        return 'https://beta-api.persistmail.com/api/v1';
     }
   }
 

@@ -89,14 +89,33 @@ class AppLogger {
 
   // Feature-specific logging methods
   static void apiRequest(String method, String url, {Map<String, dynamic>? data}) {
-    debug('API Request: $method $url', data);
+    debug('API Request: $method $url', _safeLogData(data));
   }
 
   static void apiResponse(String method, String url, int statusCode, {dynamic data}) {
-    if (statusCode >= 200 && statusCode < 300) {
-      debug('API Success: $method $url [$statusCode]', data);
-    } else {
-      warning('API Error: $method $url [$statusCode]', data);
+    try {
+      if (statusCode >= 200 && statusCode < 300) {
+        debug('API Success: $method $url [$statusCode]', _safeLogData(data));
+      } else {
+        warning('API Error: $method $url [$statusCode]', _safeLogData(data));
+      }
+    } catch (e) {
+      debug('API Response: $method $url [$statusCode] (data logging failed: $e)');
+    }
+  }
+
+  static dynamic _safeLogData(dynamic data) {
+    try {
+      if (data == null) return null;
+      if (data is String || data is num || data is bool) return data;
+      if (data is List || data is Map) {
+        return data.toString().length > 1000 
+            ? '${data.toString().substring(0, 1000)}...(truncated)'
+            : data;
+      }
+      return data.toString();
+    } catch (e) {
+      return 'Failed to serialize data: $e';
     }
   }
 

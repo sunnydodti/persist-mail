@@ -38,21 +38,30 @@ class EmailProvider extends ChangeNotifier {
   }
 
   Future<void> _initializeProvider() async {
-    // Load cached data
-    _emails = StorageService.getCachedEmails();
-    _domains = StorageService.getCachedDomains();
+    try {
+      AppLogger.debug('EmailProvider: Starting initialization');
+      
+      // Load cached data
+      _emails = StorageService.getCachedEmails();
+      _domains = StorageService.getCachedDomains();
 
-    final prefs = StorageService.getUserPreferences();
-    _selectedEmail = prefs.selectedEmail;
-    _selectedDomain = prefs.selectedDomain;
+      final prefs = StorageService.getUserPreferences();
+      _selectedEmail = prefs.selectedEmail;
+      _selectedDomain = prefs.selectedDomain;
 
-    notifyListeners();
+      notifyListeners();
 
-    // Fetch fresh data
-    await fetchDomains();
-    if (_selectedEmail != null) {
-      await fetchEmails();
-      _startAutoRefresh();
+      // Fetch fresh data
+      await fetchDomains();
+      if (_selectedEmail != null) {
+        await fetchEmails();
+        _startAutoRefresh();
+      }
+      
+      AppLogger.info('EmailProvider: Initialization completed successfully');
+    } catch (e, stackTrace) {
+      AppLogger.error('EmailProvider: Failed to initialize', e, stackTrace);
+      _setError('Failed to initialize: ${e.toString()}');
     }
   }
 
@@ -67,7 +76,7 @@ class EmailProvider extends ChangeNotifier {
       await StorageService.saveDomains(domains);
       AppLogger.info('EmailProvider: Domains fetched successfully', {
         'count': domains.length,
-        'duration': '${stopwatch.elapsedMilliseconds}ms'
+        'duration': '${stopwatch.elapsedMilliseconds}ms',
       });
       _clearError();
     } catch (e, stackTrace) {
