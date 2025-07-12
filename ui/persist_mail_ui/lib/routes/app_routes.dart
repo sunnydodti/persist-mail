@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:persist_mail_ui/screens/home_screen.dart';
-import 'package:persist_mail_ui/screens/mailbox_screen.dart';
-import 'package:persist_mail_ui/screens/email_detail_screen.dart';
-import 'package:persist_mail_ui/screens/settings_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/mailbox_screen.dart';
+import '../screens/email_detail_screen.dart';
+import '../screens/settings_screen.dart';
 
 class AppRoutes {
   // Route names
@@ -14,21 +14,19 @@ class AppRoutes {
   // Route generator
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case home:
+      case '/':
         return MaterialPageRoute(
           builder: (_) => const HomeScreen(),
           settings: settings,
         );
 
-      case mailbox:
-        final args = settings.arguments as Map<String, dynamic>?;
+      case '/mailbox':
         return MaterialPageRoute(
-          builder: (_) =>
-              MailboxScreen(emailAddress: args?['emailAddress'] as String?),
+          builder: (_) => const MailboxScreen(),
           settings: settings,
         );
 
-      case emailDetail:
+      case '/email-detail':
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
           builder: (_) =>
@@ -36,7 +34,7 @@ class AppRoutes {
           settings: settings,
         );
 
-      case settings:
+      case '/settings':
         return MaterialPageRoute(
           builder: (_) => const SettingsScreen(),
           settings: settings,

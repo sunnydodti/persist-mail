@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_preferences.dart';
 import '../services/storage_service.dart';
+import '../services/logging_service.dart';
 
 class ThemeProvider extends ChangeNotifier {
   UserPreferences _preferences = UserPreferences.defaultPreferences();
@@ -13,24 +14,54 @@ class ThemeProvider extends ChangeNotifier {
   ThemeData get currentTheme => isDarkMode ? _darkTheme : _lightTheme;
 
   ThemeProvider() {
+    AppLogger.debug('ThemeProvider: Initializing');
     _loadPreferences();
   }
 
   void _loadPreferences() {
-    _preferences = StorageService.getUserPreferences();
-    notifyListeners();
+    try {
+      _preferences = StorageService.getUserPreferences();
+      AppLogger.debug('ThemeProvider: Preferences loaded', {
+        'isDarkMode': _preferences.isDarkMode,
+      });
+      notifyListeners();
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'ThemeProvider: Failed to load preferences',
+        e,
+        stackTrace,
+      );
+    }
   }
 
   Future<void> toggleTheme() async {
-    _preferences.isDarkMode = !_preferences.isDarkMode;
-    await StorageService.savePreferences(_preferences);
-    notifyListeners();
+    try {
+      final oldValue = _preferences.isDarkMode;
+      _preferences.isDarkMode = !_preferences.isDarkMode;
+      await StorageService.savePreferences(_preferences);
+      AppLogger.themeChanged(_preferences.isDarkMode);
+      AppLogger.debug('ThemeProvider: Theme toggled', {
+        'from': oldValue,
+        'to': _preferences.isDarkMode,
+      });
+      notifyListeners();
+    } catch (e, stackTrace) {
+      AppLogger.error('ThemeProvider: Failed to toggle theme', e, stackTrace);
+    }
   }
 
   Future<void> setTheme(bool isDark) async {
-    _preferences.isDarkMode = isDark;
-    await StorageService.savePreferences(_preferences);
-    notifyListeners();
+    try {
+      if (_preferences.isDarkMode != isDark) {
+        _preferences.isDarkMode = isDark;
+        await StorageService.savePreferences(_preferences);
+        AppLogger.themeChanged(isDark);
+        AppLogger.debug('ThemeProvider: Theme set', {'isDarkMode': isDark});
+        notifyListeners();
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('ThemeProvider: Failed to set theme', e, stackTrace);
+    }
   }
 
   // Light Theme

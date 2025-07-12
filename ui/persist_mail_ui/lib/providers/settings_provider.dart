@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:persist_mail_ui/services/logging_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
   static const String _boxName = 'settings';
@@ -30,12 +31,14 @@ class SettingsProvider extends ChangeNotifier {
   // Initialize the provider
   Future<void> init() async {
     try {
+      AppLogger.debug('SettingsProvider: Initializing');
       _settingsBox = await Hive.openBox(_boxName);
       await _loadSettings();
       _isInitialized = true;
+      AppLogger.info('SettingsProvider: Initialized successfully');
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error initializing SettingsProvider: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('SettingsProvider: Failed to initialize', e, stackTrace);
     }
   }
 
@@ -50,8 +53,16 @@ class SettingsProvider extends ChangeNotifier {
         defaultValue: true,
       );
       _maxEmails = _settingsBox.get(_maxEmailsKey, defaultValue: 15);
-    } catch (e) {
-      debugPrint('Error loading settings: $e');
+      
+      AppLogger.debug('SettingsProvider: Settings loaded', {
+        'autoRefresh': _autoRefresh,
+        'refreshInterval': _refreshInterval,
+        'cacheEnabled': _cacheEnabled,
+        'notificationsEnabled': _notificationsEnabled,
+        'maxEmails': _maxEmails,
+      });
+    } catch (e, stackTrace) {
+      AppLogger.error('SettingsProvider: Failed to load settings', e, stackTrace);
     }
   }
 
@@ -59,8 +70,9 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> _saveSetting(String key, dynamic value) async {
     try {
       await _settingsBox.put(key, value);
+      AppLogger.storageWrite(key, type: 'settings');
     } catch (e) {
-      debugPrint('Error saving setting $key: $e');
+      AppLogger.storageError('save', key, e);
     }
   }
 
@@ -68,6 +80,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setAutoRefresh(bool value) async {
     _autoRefresh = value;
     await _saveSetting(_autoRefreshKey, value);
+    AppLogger.settingChanged('autoRefresh', value);
     notifyListeners();
   }
 
@@ -77,6 +90,7 @@ class SettingsProvider extends ChangeNotifier {
       // 1 second to 5 minutes
       _refreshInterval = seconds;
       await _saveSetting(_refreshIntervalKey, seconds);
+      AppLogger.settingChanged('refreshInterval', seconds);
       notifyListeners();
     }
   }
@@ -85,6 +99,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setCacheEnabled(bool value) async {
     _cacheEnabled = value;
     await _saveSetting(_cacheEnabledKey, value);
+    AppLogger.settingChanged('cacheEnabled', value);
     notifyListeners();
   }
 
@@ -92,6 +107,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setNotificationsEnabled(bool value) async {
     _notificationsEnabled = value;
     await _saveSetting(_notificationsEnabledKey, value);
+    AppLogger.settingChanged('notificationsEnabled', value);
     notifyListeners();
   }
 
@@ -101,6 +117,7 @@ class SettingsProvider extends ChangeNotifier {
       // Between 5 and 50 emails
       _maxEmails = count;
       await _saveSetting(_maxEmailsKey, count);
+      AppLogger.settingChanged('maxEmails', count);
       notifyListeners();
     }
   }
@@ -108,11 +125,13 @@ class SettingsProvider extends ChangeNotifier {
   // Reset all settings to defaults
   Future<void> resetToDefaults() async {
     try {
+      AppLogger.warning('SettingsProvider: Resetting all settings to defaults');
       await _settingsBox.clear();
       await _loadSettings();
+      AppLogger.info('SettingsProvider: Settings reset completed');
       notifyListeners();
-    } catch (e) {
-      debugPrint('Error resetting settings: $e');
+    } catch (e, stackTrace) {
+      AppLogger.error('SettingsProvider: Failed to reset settings', e, stackTrace);
     }
   }
 

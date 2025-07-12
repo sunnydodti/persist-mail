@@ -5,8 +5,9 @@ import 'package:persist_mail_ui/providers/email_provider.dart';
 import 'package:persist_mail_ui/providers/settings_provider.dart';
 import 'package:persist_mail_ui/services/global_error_handler.dart';
 import 'package:persist_mail_ui/services/snackbar_service.dart';
+import 'package:persist_mail_ui/services/logging_service.dart';
 import 'package:persist_mail_ui/config/app_config.dart';
-// import 'package:persist_mail_ui/routes/app_routes.dart';
+import 'package:persist_mail_ui/routes/app_routes.dart';
 import 'package:persist_mail_ui/screens/home_screen.dart';
 
 class PersistMailApp extends StatelessWidget {
@@ -14,14 +15,30 @@ class PersistMailApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.debug('PersistMailApp: Building widget tree');
+    
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => EmailProvider()),
+        ChangeNotifierProvider(create: (_) {
+          AppLogger.debug('Creating ThemeProvider');
+          return ThemeProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          AppLogger.debug('Creating SettingsProvider');
+          return SettingsProvider();
+        }),
+        ChangeNotifierProvider(create: (_) {
+          AppLogger.debug('Creating EmailProvider');
+          return EmailProvider();
+        }),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
+          AppLogger.debug('Building MaterialApp with theme', {
+            'isDarkMode': themeProvider.isDarkMode,
+            'themeMode': themeProvider.themeMode.toString(),
+          });
+          
           return MaterialApp(
             title: AppConfig.appName,
             debugShowCheckedModeBanner: false,
@@ -42,11 +59,11 @@ class PersistMailApp extends StatelessWidget {
             darkTheme: themeProvider.currentTheme,
             themeMode: themeProvider.themeMode,
 
-            // Routing (temporarily commented)
-            // onGenerateRoute: AppRoutes.generateRoute,
-            // initialRoute: AppRoutes.home,
+            // Routing
+            onGenerateRoute: AppRoutes.generateRoute,
+            initialRoute: AppRoutes.home,
 
-            // Home Screen
+            // Home Screen (fallback)
             home: const HomeScreen(),
 
             // Global Scaffold Messenger Key

@@ -6,6 +6,7 @@ import '../models/domain_model.dart';
 import '../models/user_preferences.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/logging_service.dart';
 
 class EmailProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
@@ -57,15 +58,23 @@ class EmailProvider extends ChangeNotifier {
 
   // Fetch available domains
   Future<void> fetchDomains() async {
+    final stopwatch = Stopwatch()..start();
     try {
+      AppLogger.debug('EmailProvider: Fetching domains');
       _setLoading(true);
       final domains = await _apiService.getDomains();
       _domains = domains;
       await StorageService.saveDomains(domains);
+      AppLogger.info('EmailProvider: Domains fetched successfully', {
+        'count': domains.length,
+        'duration': '${stopwatch.elapsedMilliseconds}ms'
+      });
       _clearError();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error('EmailProvider: Failed to fetch domains', e, stackTrace);
       _setError(e.toString());
     } finally {
+      stopwatch.stop();
       _setLoading(false);
     }
   }
@@ -73,6 +82,7 @@ class EmailProvider extends ChangeNotifier {
   // Generate new email address
   Future<String?> generateEmail(String domain) async {
     try {
+      AppLogger.userAction('Generate Email', context: {'domain': domain});
       _setLoading(true);
       final email = await _apiService.generateEmail(domain);
       _selectedEmail = email;

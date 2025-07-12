@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:persist_mail_ui/services/snackbar_service.dart';
+import 'package:persist_mail_ui/services/logging_service.dart';
 
 class GlobalErrorHandler extends StatefulWidget {
   final Widget child;
@@ -12,8 +13,11 @@ class GlobalErrorHandler extends StatefulWidget {
   // Custom error widget builder
   static Widget customErrorWidget(FlutterErrorDetails errorDetails) {
     // Log error for debugging
-    debugPrint('Flutter Error: ${errorDetails.exception}');
-    debugPrint('Stack trace: ${errorDetails.stack}');
+    AppLogger.fatal(
+      'Flutter Error: ${errorDetails.exception}',
+      errorDetails.exception,
+      errorDetails.stack,
+    );
 
     // Show user-friendly error message
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -59,8 +63,11 @@ class _GlobalErrorHandlerState extends State<GlobalErrorHandler> {
     // Set up global error handling
     FlutterError.onError = (FlutterErrorDetails details) {
       // Log the error
-      debugPrint('Flutter Error: ${details.exception}');
-      debugPrint('Stack trace: ${details.stack}');
+      AppLogger.error(
+        'Flutter Error: ${details.exception}',
+        details.exception,
+        details.stack,
+      );
 
       // Show user-friendly error message
       WidgetsBinding.instance.addPostFrameCallback((_) {
