@@ -14,8 +14,8 @@ void main() async {
   // Initialize storage
   await StorageService.init();
 
-  // Set flavor for development
-  AppConfig.currentFlavor = Flavor.DEV;
+  // Set flavor for staging
+  AppConfig.currentFlavor = Flavor.STG;
 
   runApp(const PersistMailApp());
 }

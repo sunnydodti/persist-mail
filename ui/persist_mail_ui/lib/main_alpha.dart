@@ -1,32 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:persist_mail_ui/app.dart';
+import 'package:persist_mail_ui/base/enums.dart';
+import 'package:persist_mail_ui/config/app_config.dart';
+import 'package:persist_mail_ui/services/storage_service.dart';
 
-import 'base/enums.dart' show Flavor;
-import 'base/models/flavour_config.dart' show FlavorConfig;
-import 'base/models/flavour_values.dart' show FlavorValues;
-import 'base/widgets/flavour_banner.dart';
-import 'ui/pages/home/home_page.dart' show HomePage;
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
-  FlavorConfig(
-    flavor: Flavor.DEV,
-    color: Colors.blue,
-    values: FlavorValues(baseUrl: 'https://persist.site/dev'),
-  );
+  // Initialize Hive
+  await Hive.initFlutter();
 
-  runApp(const MyApp());
-}
+  // Initialize storage
+  await StorageService.init();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // Set flavor for alpha
+  AppConfig.currentFlavor = Flavor.ALPHA;
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: FlavorBanner(child: const HomePage()),
-    );
-  }
+  runApp(const PersistMailApp());
 }
