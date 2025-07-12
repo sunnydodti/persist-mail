@@ -20,8 +20,6 @@ class EmailService:
     async def connect(self) -> IMAPClient:
         """Connect to the IMAP server and authenticate."""
         try:
-            print(f"Attempting to connect to {self.imap_host}:{self.imap_port}")
-            
             # Create SSL context that accepts self-signed certificates
             context = ssl.create_default_context()
             context.check_hostname = False
@@ -31,19 +29,16 @@ class EmailService:
                 self.imap_host,
                 port=self.imap_port,
                 ssl_context=context,
-                use_uid=True
+                use_uid=True,
+                timeout=10  # Add 10 second timeout
             )
             
-            print(f"Connected. Attempting to login with email: {self.email}")
             server.login(self.email, self.password)
-            print("Login successful")
             
             self._server = server
             return self._server
             
         except Exception as e:
-            print(f"Connection/login failed with error: {str(e)}")
-            print(f"Debug info: Host={self.imap_host}, Port={self.imap_port}, Email={self.email}")
             if self._server:
                 try:
                     self._server.logout()

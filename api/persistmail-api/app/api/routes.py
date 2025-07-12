@@ -89,8 +89,6 @@ async def get_emails(
         # Fallback to shared secret for legacy mailboxes
         auth_password = db_mailbox.domain.credentials_key
     
-    print(f"Domain config: {db_mailbox.domain.domain}, Host: {db_mailbox.domain.imap_host}, Port: {db_mailbox.domain.imap_port}")
-    
     # Initialize email service
     email_service = EmailService(
         db_mailbox.domain.imap_host,

@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     MAILCOW_API_URL: str = ""           # e.g., https://mail.example.com/api/v1
     MAILCOW_API_KEY: str = ""           # Mailcow API key
     MAILCOW_ENABLED: bool = True        # Enable Mailcow integration
-    MAILCOW_DEFAULT_QUOTA_MB: int = 50  # Default quota for new mailboxes
-    MAILCOW_MAX_QUOTA_MB: int = 100     # Maximum quota allowed
+    MAILCOW_DEFAULT_QUOTA_MB: int = 25  # Default quota for new mailboxes
+    MAILCOW_MAX_QUOTA_MB: int = 25     # Maximum quota allowed
     
     # Mailbox Lifecycle Settings
     DEFAULT_MAILBOX_EXPIRY_HOURS: int = 24    # Default expiry time
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     MAX_EMAIL_LIMIT: int = 50
     
     # Mailbox Settings
-    DEFAULT_MAILBOX_QUOTA: int = 50     # MB
+    DEFAULT_MAILBOX_QUOTA: int = 25     # MB
     MAILBOX_EXPIRY_HOURS: int = 24      # Auto-delete after
     PASSWORD_LENGTH: int = 16           # Generated password length
     

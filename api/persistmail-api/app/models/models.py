@@ -57,3 +57,7 @@ class Mailbox(Base):
             return 0
         delta = self.expires_at - datetime.utcnow()
         return max(0, int(delta.total_seconds() / 3600))
+
+    def set_expiry(self, hours: int) -> None:
+        """Set the expiration time for the mailbox."""
+        self.expires_at = datetime.utcnow() + timedelta(hours=hours)
