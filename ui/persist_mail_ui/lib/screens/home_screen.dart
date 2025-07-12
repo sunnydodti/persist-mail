@@ -7,6 +7,7 @@ import '../services/snackbar_service.dart';
 import '../services/logging_service.dart';
 import '../models/mailbox_history.dart';
 import 'mailbox_screen.dart';
+import 'mailbox_history_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const HomeTab(),
     const MailboxScreen(),
+    const MailboxHistoryScreen(),
     const SettingsScreen(),
   ];
 
@@ -30,11 +32,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Mailbox'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',

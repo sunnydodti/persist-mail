@@ -41,6 +41,16 @@ class StorageService {
     await _emailBox?.put(email.id, email);
   }
 
+  static Future<void> saveEmailsForMailbox(List<EmailModel> emails, String mailbox) async {
+    // Clear existing emails for this mailbox first
+    await clearEmailsForMailbox(mailbox);
+    
+    final Map<String, EmailModel> emailMap = {
+      for (var email in emails) email.id: email,
+    };
+    await _emailBox?.putAll(emailMap);
+  }
+
   static Future<void> saveEmails(List<EmailModel> emails) async {
     final Map<String, EmailModel> emailMap = {
       for (var email in emails) email.id: email,
@@ -52,12 +62,36 @@ class StorageService {
     return _emailBox?.values.toList() ?? [];
   }
 
+  static List<EmailModel> getCachedEmailsForMailbox(String mailbox) {
+    final allEmails = _emailBox?.values.toList() ?? [];
+    return allEmails.where((email) => email.to == mailbox).toList();
+  }
+
   static EmailModel? getEmailById(String id) {
     return _emailBox?.get(id);
   }
 
+  static Future<void> clearEmailsForMailbox(String mailbox) async {
+    final emailsToRemove = <String>[];
+    final allEmails = _emailBox?.values.toList() ?? [];
+    
+    for (final email in allEmails) {
+      if (email.to == mailbox) {
+        emailsToRemove.add(email.id);
+      }
+    }
+    
+    for (final emailId in emailsToRemove) {
+      await _emailBox?.delete(emailId);
+    }
+  }
+
   static Future<void> clearEmails() async {
     await _emailBox?.clear();
+  }
+
+  static Future<void> removeEmail(String emailId) async {
+    await _emailBox?.delete(emailId);
   }
 
   // Domain Storage

@@ -39,20 +39,26 @@ class EmailProvider extends ChangeNotifier {
 
   EmailProvider() {
     _initializeProvider();
+    _startPeriodicCleanup();
   }
 
   Future<void> _initializeProvider() async {
     try {
       AppLogger.debug('EmailProvider: Starting initialization');
 
-      // Load cached data
-      _emails = StorageService.getCachedEmails();
+      // Load cached domains and mailbox history
       _domains = StorageService.getCachedDomains();
       _mailboxHistory = StorageService.getCachedMailboxHistories();
 
+      // Load user preferences
       final prefs = StorageService.getUserPreferences();
       _selectedEmail = prefs.selectedEmail;
       _selectedDomain = prefs.selectedDomain;
+
+      // Load cached emails for the selected mailbox only
+      if (_selectedEmail != null) {
+        _emails = StorageService.getCachedEmailsForMailbox(_selectedEmail!);
+      }
 
       notifyListeners();
 
@@ -94,13 +100,23 @@ class EmailProvider extends ChangeNotifier {
   }
 
   // Select existing email
-  void selectEmail(String email, String domain) {
+  Future<void> selectEmail(String email, String domain) async {
     _selectedEmail = email;
     _selectedDomain = domain;
-    _savePreferences();
+    
+    // Clear current emails and load cached emails for this mailbox
+    _emails.clear();
+    _emails = StorageService.getCachedEmailsForMailbox(email);
+    
+    await _addToMailboxHistory(email, domain);
+    await _savePreferences();
+    
+    // Notify listeners immediately to show cached emails
+    notifyListeners();
+    
+    // Then fetch fresh emails from API
     fetchEmails();
     _startAutoRefresh();
-    notifyListeners();
   }
 
   // Select or create mailbox with username and domain
@@ -115,9 +131,19 @@ class EmailProvider extends ChangeNotifier {
       final email = '$username@$domain';
       _selectedEmail = email;
       _selectedDomain = domain;
+      
+      // Clear current emails and load cached emails for this mailbox
+      _emails.clear();
+      _emails = StorageService.getCachedEmailsForMailbox(email);
+      
+      // Add to mailbox history
+      await _addToMailboxHistory(email, domain);
       await _savePreferences();
 
-      // Fetch emails for this address (this will create the mailbox if it doesn't exist)
+      // Notify listeners immediately to show cached emails
+      notifyListeners();
+
+      // Fetch fresh emails for this address (this will create the mailbox if it doesn't exist)
       await fetchEmails();
       _startAutoRefresh();
 
@@ -138,10 +164,21 @@ class EmailProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       final emails = await _apiService.getEmails(_selectedEmail!);
-      _emails = emails.take(AppConfig.maxEmailsToShow).toList();
-      await StorageService.saveEmails(_emails);
+      
+      // Only take the configured max emails and filter for this specific mailbox
+      final filteredEmails = emails
+          .where((email) => email.to == _selectedEmail)
+          .take(AppConfig.maxEmailsToShow)
+          .toList();
+      
+      _emails = filteredEmails;
+      
+      // Save emails with mailbox association
+      await StorageService.saveEmailsForMailbox(_emails, _selectedEmail!);
       _clearError();
     } catch (e) {
+      // On error, load cached emails for this mailbox
+      _emails = StorageService.getCachedEmailsForMailbox(_selectedEmail!);
       _setError(e.toString());
     } finally {
       _setLoading(false);
@@ -247,6 +284,40 @@ class EmailProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Add mailbox to history
+  Future<void> _addToMailboxHistory(String email, String domain) async {
+    // Check if already exists
+    final existingIndex = _mailboxHistory.indexWhere((h) => h.email == email);
+    
+    if (existingIndex != -1) {
+      // Update existing entry with new last used time
+      final existing = _mailboxHistory[existingIndex];
+      final updated = existing.copyWith(lastUsed: DateTime.now());
+      _mailboxHistory[existingIndex] = updated;
+    } else {
+      // Create new entry
+      final newHistory = MailboxHistory.fromEmailAndDomain(email, domain);
+      _mailboxHistory.insert(0, newHistory);
+    }
+    
+    // Sort by last used (most recent first)
+    _mailboxHistory.sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
+    
+    // Keep only the most recent 50 entries
+    if (_mailboxHistory.length > 50) {
+      _mailboxHistory = _mailboxHistory.take(50).toList();
+    }
+    
+    // Save to storage individually
+    await StorageService.addMailboxToHistory(email, domain);
+    
+    AppLogger.debug('EmailProvider: Added to mailbox history', {
+      'email': email,
+      'domain': domain,
+      'totalHistory': _mailboxHistory.length,
+    });
+  }
+
   Future<void> _savePreferences() async {
     final prefs = StorageService.getUserPreferences();
     final updatedPrefs = UserPreferences(
@@ -260,9 +331,76 @@ class EmailProvider extends ChangeNotifier {
     await StorageService.savePreferences(updatedPrefs);
   }
 
+  // Email expiry logic
+  Future<void> cleanupExpiredEmails() async {
+    try {
+      final currentTime = DateTime.now();
+      final emailsToRemove = <String>[];
+
+      // Get ALL cached emails (not just current mailbox)
+      final allCachedEmails = StorageService.getCachedEmails();
+
+      // Check each cached email for expiry (1 hour)
+      for (final email in allCachedEmails) {
+        final emailTime = email.receivedAt;
+        final timeDifference = currentTime.difference(emailTime).inHours;
+        
+        if (timeDifference >= 1) { // 1 hour expiry
+          emailsToRemove.add(email.id);
+        }
+      }
+
+      // Remove expired emails from storage
+      if (emailsToRemove.isNotEmpty) {
+        for (final emailId in emailsToRemove) {
+          await StorageService.removeEmail(emailId);
+        }
+
+        // Also remove from current emails list if they belong to selected mailbox
+        final currentEmailsToRemove = _emails
+            .where((email) => emailsToRemove.contains(email.id))
+            .map((email) => email.id)
+            .toList();
+            
+        if (currentEmailsToRemove.isNotEmpty) {
+          _emails.removeWhere((email) => emailsToRemove.contains(email.id));
+          notifyListeners();
+        }
+
+        AppLogger.info('EmailProvider: Cleaned up expired emails', {
+          'removed_count': emailsToRemove.length,
+          'current_mailbox_affected': currentEmailsToRemove.length,
+        });
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('EmailProvider: Failed to cleanup expired emails', e, stackTrace);
+    }
+  }
+
+  // Start periodic cleanup timer
+  Timer? _cleanupTimer;
+
+  void _startPeriodicCleanup() {
+    _stopPeriodicCleanup();
+    _cleanupTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
+      cleanupExpiredEmails();
+    });
+  }
+
+  void _stopPeriodicCleanup() {
+    _cleanupTimer?.cancel();
+    _cleanupTimer = null;
+  }
+
+  // Get cached emails for a specific mailbox (used by history)
+  List<EmailModel> getEmailsForMailbox(String mailbox) {
+    return StorageService.getCachedEmailsForMailbox(mailbox);
+  }
+
   @override
   void dispose() {
     _stopAutoRefresh();
+    _stopPeriodicCleanup();
     super.dispose();
   }
 }

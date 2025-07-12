@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/email_provider.dart';
 import '../models/email_model.dart';
@@ -35,12 +36,12 @@ class MailboxScreen extends StatelessWidget {
                   Icon(Icons.email_outlined, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
-                    'No email address selected',
+                    'No mailbox selected',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Go to Home to generate an email address',
+                    'Go to Home to select a mailbox',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -74,21 +75,31 @@ class MailboxScreen extends StatelessWidget {
           }
 
           if (emailProvider.emails.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
+                  const Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
                     'No emails yet',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Emails will appear here automatically',
-                    style: TextStyle(color: Colors.grey),
+                    emailProvider.isLoading 
+                        ? 'Loading emails...'
+                        : 'Emails will appear here when received',
+                    style: const TextStyle(color: Colors.grey),
                   ),
+                  if (!emailProvider.isLoading) ...[
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: emailProvider.refresh,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Check for emails'),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -106,16 +117,68 @@ class MailboxScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Monitoring:',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Monitoring:',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              Text(
+                                emailProvider.selectedEmail!,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 20),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: emailProvider.selectedEmail!));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Email copied to clipboard')),
+                            );
+                          },
+                          tooltip: 'Copy email address',
+                        ),
+                      ],
                     ),
-                    Text(
-                      emailProvider.selectedEmail!,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${emailProvider.emails.length} emails',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        if (emailProvider.isLoading) ...[
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Refreshing...',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/mailbox_screen.dart';
+import '../screens/mailbox_history_screen.dart';
 import '../screens/email_detail_screen.dart';
 import '../screens/settings_screen.dart';
 
@@ -8,6 +9,7 @@ class AppRoutes {
   // Route names
   static const String home = '/';
   static const String mailbox = '/mailbox';
+  static const String mailboxHistory = '/mailbox-history';
   static const String emailDetail = '/email-detail';
   static const String settings = '/settings';
 
@@ -23,6 +25,12 @@ class AppRoutes {
       case '/mailbox':
         return MaterialPageRoute(
           builder: (_) => const MailboxScreen(),
+          settings: settings,
+        );
+
+      case '/mailbox-history':
+        return MaterialPageRoute(
+          builder: (_) => const MailboxHistoryScreen(),
           settings: settings,
         );
 

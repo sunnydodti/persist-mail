@@ -168,9 +168,19 @@ class ApiService {
   // Get specific email content
   Future<EmailModel> getEmailContent(String emailId) async {
     try {
-      final response = await _dio.get('/emails/$emailId');
+      AppLogger.debug('ApiService: Fetching email content for: $emailId');
+      final response = await _dio.get('/email/$emailId');
+      
+      AppLogger.info('ApiService: Email content fetched successfully', {
+        'emailId': emailId,
+      });
+      
       return EmailModel.fromJson(response.data);
     } on DioException catch (e) {
+      AppLogger.error(
+        'ApiService: Failed to fetch email content for: $emailId',
+        e,
+      );
       throw _handleError(e);
     }
   }
