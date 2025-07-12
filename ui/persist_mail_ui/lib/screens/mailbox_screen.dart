@@ -79,7 +79,11 @@ class MailboxScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
+                  const Icon(
+                    Icons.inbox_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'No emails yet',
@@ -87,7 +91,7 @@ class MailboxScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    emailProvider.isLoading 
+                    emailProvider.isLoading
                         ? 'Loading emails...'
                         : 'Emails will appear here when received',
                     style: const TextStyle(color: Colors.grey),
@@ -129,10 +133,11 @@ class MailboxScreen extends StatelessWidget {
                               ),
                               Text(
                                 emailProvider.selectedEmail!,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
@@ -140,9 +145,13 @@ class MailboxScreen extends StatelessWidget {
                         IconButton(
                           icon: const Icon(Icons.copy, size: 20),
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(text: emailProvider.selectedEmail!));
+                            Clipboard.setData(
+                              ClipboardData(text: emailProvider.selectedEmail!),
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Email copied to clipboard')),
+                              const SnackBar(
+                                content: Text('Email copied to clipboard'),
+                              ),
                             );
                           },
                           tooltip: 'Copy email address',
@@ -155,7 +164,9 @@ class MailboxScreen extends StatelessWidget {
                         Icon(
                           Icons.email,
                           size: 16,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -169,7 +180,9 @@ class MailboxScreen extends StatelessWidget {
                             height: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
                             ),
                           ),
                           const SizedBox(width: 4),

@@ -23,8 +23,14 @@ class EmailProvider extends ChangeNotifier {
 
   // Auto-refresh logic
   Timer? _refreshTimer;
+  Timer? _countdownTimer;
   DateTime? _refreshStartTime;
   int _currentRefreshInterval = AppConfig.initialRefreshInterval;
+
+  // Auto-refresh state tracking
+  int _autoRefreshCountdown = 0;
+  bool _isAutoRefreshActive = false;
+  int _consecutiveFailures = 0;
 
   // Getters
   List<EmailModel> get emails => _emails;
@@ -36,6 +42,11 @@ class EmailProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasSelectedEmail => _selectedEmail != null;
   bool get hasMailboxHistory => _mailboxHistory.isNotEmpty;
+
+  // Getters for auto-refresh state
+  int get autoRefreshCountdown => _autoRefreshCountdown;
+  bool get isAutoRefreshActive => _isAutoRefreshActive;
+  int get consecutiveFailures => _consecutiveFailures;
 
   EmailProvider() {
     _initializeProvider();
@@ -64,6 +75,14 @@ class EmailProvider extends ChangeNotifier {
 
       // Fetch fresh data
       await fetchDomains();
+
+      // Validate selected domain against available domains
+      if (_selectedDomain != null &&
+          !_domains.any((domain) => domain.domain == _selectedDomain)) {
+        _selectedDomain = _domains.isNotEmpty ? _domains.first.domain : null;
+        await _savePreferences();
+      }
+
       if (_selectedEmail != null) {
         await fetchEmails();
         _startAutoRefresh();
@@ -85,6 +104,10 @@ class EmailProvider extends ChangeNotifier {
       final domains = await _apiService.getDomains();
       _domains = domains;
       await StorageService.saveDomains(domains);
+
+      // Validate selected domain against available domains
+      _validateSelectedDomain();
+
       AppLogger.info('EmailProvider: Domains fetched successfully', {
         'count': domains.length,
         'duration': '${stopwatch.elapsedMilliseconds}ms',
@@ -103,17 +126,17 @@ class EmailProvider extends ChangeNotifier {
   Future<void> selectEmail(String email, String domain) async {
     _selectedEmail = email;
     _selectedDomain = domain;
-    
+
     // Clear current emails and load cached emails for this mailbox
     _emails.clear();
     _emails = StorageService.getCachedEmailsForMailbox(email);
-    
+
     await _addToMailboxHistory(email, domain);
     await _savePreferences();
-    
+
     // Notify listeners immediately to show cached emails
     notifyListeners();
-    
+
     // Then fetch fresh emails from API
     fetchEmails();
     _startAutoRefresh();
@@ -131,11 +154,11 @@ class EmailProvider extends ChangeNotifier {
       final email = '$username@$domain';
       _selectedEmail = email;
       _selectedDomain = domain;
-      
+
       // Clear current emails and load cached emails for this mailbox
       _emails.clear();
       _emails = StorageService.getCachedEmailsForMailbox(email);
-      
+
       // Add to mailbox history
       await _addToMailboxHistory(email, domain);
       await _savePreferences();
@@ -164,22 +187,36 @@ class EmailProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       final emails = await _apiService.getEmails(_selectedEmail!);
-      
+
       // Only take the configured max emails and filter for this specific mailbox
       final filteredEmails = emails
           .where((email) => email.to == _selectedEmail)
           .take(AppConfig.maxEmailsToShow)
           .toList();
-      
+
       _emails = filteredEmails;
-      
+
       // Save emails with mailbox association
       await StorageService.saveEmailsForMailbox(_emails, _selectedEmail!);
+
+      // Reset consecutive failures on success
+      _consecutiveFailures = 0;
       _clearError();
     } catch (e) {
-      // On error, load cached emails for this mailbox
-      _emails = StorageService.getCachedEmailsForMailbox(_selectedEmail!);
-      _setError(e.toString());
+      // Increment consecutive failures
+      _consecutiveFailures++;
+
+      // Stop auto-refresh if we have 3 consecutive failures
+      if (_consecutiveFailures >= 3 && _isAutoRefreshActive) {
+        _stopAutoRefresh();
+        _setError(
+          'Auto-refresh stopped after 3 consecutive failures. Use manual refresh to try again.',
+        );
+      } else {
+        // On error, load cached emails for this mailbox
+        _emails = StorageService.getCachedEmailsForMailbox(_selectedEmail!);
+        _setError(e.toString());
+      }
     } finally {
       _setLoading(false);
     }
@@ -217,16 +254,44 @@ class EmailProvider extends ChangeNotifier {
     _stopAutoRefresh();
     _refreshStartTime = DateTime.now();
     _currentRefreshInterval = AppConfig.initialRefreshInterval;
+    _consecutiveFailures = 0; // Reset failures when starting auto-refresh
+    _isAutoRefreshActive = true;
     _scheduleNextRefresh();
+  }
+
+  // Public method to start auto-refresh
+  void startAutoRefresh() {
+    _startAutoRefresh();
+  }
+
+  // Public method to stop auto-refresh
+  void stopAutoRefresh() {
+    _stopAutoRefresh();
   }
 
   void _scheduleNextRefresh() {
     if (_selectedEmail == null) return;
 
+    _autoRefreshCountdown = _currentRefreshInterval;
+
+    // Update countdown every second
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (
+      countdownTimer,
+    ) {
+      if (_autoRefreshCountdown > 0 && _isAutoRefreshActive) {
+        _autoRefreshCountdown--;
+        notifyListeners();
+      } else {
+        countdownTimer.cancel();
+      }
+    });
+
     _refreshTimer = Timer(Duration(seconds: _currentRefreshInterval), () {
-      fetchEmails();
-      _updateRefreshInterval();
-      _scheduleNextRefresh();
+      if (_isAutoRefreshActive) {
+        fetchEmails();
+        _updateRefreshInterval();
+        _scheduleNextRefresh();
+      }
     });
   }
 
@@ -250,6 +315,11 @@ class EmailProvider extends ChangeNotifier {
   void _stopAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+    _isAutoRefreshActive = false;
+    _autoRefreshCountdown = 0;
+    notifyListeners();
   }
 
   // Manual refresh
@@ -288,7 +358,7 @@ class EmailProvider extends ChangeNotifier {
   Future<void> _addToMailboxHistory(String email, String domain) async {
     // Check if already exists
     final existingIndex = _mailboxHistory.indexWhere((h) => h.email == email);
-    
+
     if (existingIndex != -1) {
       // Update existing entry with new last used time
       final existing = _mailboxHistory[existingIndex];
@@ -299,18 +369,18 @@ class EmailProvider extends ChangeNotifier {
       final newHistory = MailboxHistory.fromEmailAndDomain(email, domain);
       _mailboxHistory.insert(0, newHistory);
     }
-    
+
     // Sort by last used (most recent first)
     _mailboxHistory.sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
-    
+
     // Keep only the most recent 50 entries
     if (_mailboxHistory.length > 50) {
       _mailboxHistory = _mailboxHistory.take(50).toList();
     }
-    
+
     // Save to storage individually
     await StorageService.addMailboxToHistory(email, domain);
-    
+
     AppLogger.debug('EmailProvider: Added to mailbox history', {
       'email': email,
       'domain': domain,
@@ -344,8 +414,9 @@ class EmailProvider extends ChangeNotifier {
       for (final email in allCachedEmails) {
         final emailTime = email.receivedAt;
         final timeDifference = currentTime.difference(emailTime).inHours;
-        
-        if (timeDifference >= 1) { // 1 hour expiry
+
+        if (timeDifference >= 1) {
+          // 1 hour expiry
           emailsToRemove.add(email.id);
         }
       }
@@ -361,7 +432,7 @@ class EmailProvider extends ChangeNotifier {
             .where((email) => emailsToRemove.contains(email.id))
             .map((email) => email.id)
             .toList();
-            
+
         if (currentEmailsToRemove.isNotEmpty) {
           _emails.removeWhere((email) => emailsToRemove.contains(email.id));
           notifyListeners();
@@ -373,7 +444,11 @@ class EmailProvider extends ChangeNotifier {
         });
       }
     } catch (e, stackTrace) {
-      AppLogger.error('EmailProvider: Failed to cleanup expired emails', e, stackTrace);
+      AppLogger.error(
+        'EmailProvider: Failed to cleanup expired emails',
+        e,
+        stackTrace,
+      );
     }
   }
 
@@ -395,6 +470,56 @@ class EmailProvider extends ChangeNotifier {
   // Get cached emails for a specific mailbox (used by history)
   List<EmailModel> getEmailsForMailbox(String mailbox) {
     return StorageService.getCachedEmailsForMailbox(mailbox);
+  }
+
+  // Delete a mailbox from history and all its associated emails
+  Future<void> deleteMailboxFromHistory(String email) async {
+    try {
+      _setLoading(true);
+
+      // Delete from storage
+      await StorageService.deleteMailboxHistory(email);
+
+      // Refresh the mailbox history list
+      _mailboxHistory = StorageService.getCachedMailboxHistories();
+
+      // If this was the currently selected email, clear it
+      if (_selectedEmail == email) {
+        clearSelectedEmail();
+      }
+
+      _clearError();
+    } catch (e) {
+      _setError('Failed to delete mailbox: ${e.toString()}');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Validate that the selected domain exists in available domains
+  void _validateSelectedDomain() {
+    if (_selectedDomain != null && _domains.isNotEmpty) {
+      final domainExists = _domains.any(
+        (domain) => domain.domain == _selectedDomain,
+      );
+      if (!domainExists) {
+        AppLogger.debug(
+          'EmailProvider: Selected domain not found, resetting to first available',
+          {
+            'oldDomain': _selectedDomain,
+            'availableDomains': _domains.map((d) => d.domain).toList(),
+          },
+        );
+        // Reset to first available domain
+        _selectedDomain = _domains.first.domain;
+        // Update preferences to persist the change
+        _savePreferences();
+      }
+    } else if (_selectedDomain == null && _domains.isNotEmpty) {
+      // No domain selected, set to first available
+      _selectedDomain = _domains.first.domain;
+      _savePreferences();
+    }
   }
 
   @override

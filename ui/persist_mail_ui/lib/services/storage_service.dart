@@ -41,10 +41,13 @@ class StorageService {
     await _emailBox?.put(email.id, email);
   }
 
-  static Future<void> saveEmailsForMailbox(List<EmailModel> emails, String mailbox) async {
+  static Future<void> saveEmailsForMailbox(
+    List<EmailModel> emails,
+    String mailbox,
+  ) async {
     // Clear existing emails for this mailbox first
     await clearEmailsForMailbox(mailbox);
-    
+
     final Map<String, EmailModel> emailMap = {
       for (var email in emails) email.id: email,
     };
@@ -74,13 +77,13 @@ class StorageService {
   static Future<void> clearEmailsForMailbox(String mailbox) async {
     final emailsToRemove = <String>[];
     final allEmails = _emailBox?.values.toList() ?? [];
-    
+
     for (final email in allEmails) {
       if (email.to == mailbox) {
         emailsToRemove.add(email.id);
       }
     }
-    
+
     for (final emailId in emailsToRemove) {
       await _emailBox?.delete(emailId);
     }
@@ -150,6 +153,14 @@ class StorageService {
 
   static MailboxHistory? getMailboxHistoryByEmail(String email) {
     return _mailboxHistoryBox?.get(email);
+  }
+
+  static Future<void> deleteMailboxHistory(String email) async {
+    // Delete the mailbox from history
+    await _mailboxHistoryBox?.delete(email);
+
+    // Delete all emails associated with this mailbox
+    await clearEmailsForMailbox(email);
   }
 
   static Future<void> clearMailboxHistories() async {

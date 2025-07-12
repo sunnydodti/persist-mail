@@ -6,7 +6,7 @@ import '../providers/theme_provider.dart';
 import '../services/snackbar_service.dart';
 import '../services/logging_service.dart';
 import '../models/mailbox_history.dart';
-import 'mailbox_screen.dart';
+import 'active_mailbox_page.dart';
 import 'mailbox_history_screen.dart';
 import 'settings_screen.dart';
 
@@ -22,7 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const HomeTab(),
-    const MailboxScreen(),
     const MailboxHistoryScreen(),
     const SettingsScreen(),
   ];
@@ -37,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Mailbox'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
@@ -79,9 +77,34 @@ class _HomeTabState extends State<HomeTab> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final emailProvider = Provider.of<EmailProvider>(context, listen: false);
-      if (emailProvider.domains.isNotEmpty && _selectedDomain == null) {
+      // Set selected domain from provider if available, or use first domain
+      if (emailProvider.selectedDomain != null &&
+          emailProvider.domains.any(
+            (d) => d.domain == emailProvider.selectedDomain,
+          )) {
+        setState(() {
+          _selectedDomain = emailProvider.selectedDomain;
+        });
+      } else if (emailProvider.domains.isNotEmpty && _selectedDomain == null) {
         setState(() {
           _selectedDomain = emailProvider.domains.first.domain;
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final emailProvider = Provider.of<EmailProvider>(context, listen: false);
+      // Validate and update selected domain if needed
+      if (_selectedDomain != null &&
+          !emailProvider.domains.any((d) => d.domain == _selectedDomain)) {
+        setState(() {
+          _selectedDomain = emailProvider.domains.isNotEmpty
+              ? emailProvider.domains.first.domain
+              : null;
         });
       }
     });
@@ -296,91 +319,97 @@ class _HomeTabState extends State<HomeTab> {
     return Card(
       elevation: 2,
       color: Theme.of(context).colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.mail,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    emailProvider.selectedEmail!,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontFamily: 'monospace',
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () =>
-                      _copyToClipboard(emailProvider.selectedEmail!),
-                  icon: Icon(
-                    Icons.copy,
+      child: InkWell(
+        onTap: () {
+          // Navigate to Active Mailbox Page
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ActiveMailboxPage()),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.mail,
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
-                  tooltip: 'Copy email',
-                ),
-                IconButton(
-                  onPressed: () => _showClearConfirmDialog(emailProvider),
-                  icon: Icon(
-                    Icons.clear,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      emailProvider.selectedEmail!,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontFamily: 'monospace',
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
                   ),
-                  tooltip: 'Clear mailbox',
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.inbox,
-                  size: 16,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onPrimaryContainer.withOpacity(0.7),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${emailProvider.emails.length} emails',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onPrimaryContainer.withOpacity(0.7),
-                  ),
-                ),
-                const Spacer(),
-                if (emailProvider.isLoading)
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                  IconButton(
+                    onPressed: () =>
+                        _copyToClipboard(emailProvider.selectedEmail!),
+                    icon: Icon(
+                      Icons.copy,
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
-                  )
-                else
+                    tooltip: 'Copy email',
+                  ),
                   IconButton(
                     onPressed: emailProvider.refresh,
                     icon: Icon(
                       Icons.refresh,
-                      size: 16,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    tooltip: 'Refresh emails',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(
+                    Icons.inbox,
+                    size: 16,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onPrimaryContainer.withOpacity(0.7),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${emailProvider.emails.length} emails',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(
                         context,
                       ).colorScheme.onPrimaryContainer.withOpacity(0.7),
                     ),
-                    tooltip: 'Refresh emails',
                   ),
-              ],
-            ),
-          ],
+                  const Spacer(),
+                  if (emailProvider.isLoading)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onPrimaryContainer.withOpacity(0.7),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -399,7 +428,10 @@ class _HomeTabState extends State<HomeTab> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedDomain,
+              value:
+                  emailProvider.domains.any((d) => d.domain == _selectedDomain)
+                  ? _selectedDomain
+                  : null,
               isExpanded: true,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
@@ -601,6 +633,12 @@ class _HomeTabState extends State<HomeTab> {
       'Previous Mailbox Selected',
       context: {'email': history.email, 'domain': history.domain},
     );
+
+    // Navigate to Active Mailbox Page
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ActiveMailboxPage()),
+    );
   }
 
   void _showAllMailboxHistoryDialog(EmailProvider emailProvider) {
@@ -682,6 +720,12 @@ class _HomeTabState extends State<HomeTab> {
           'Random Mailbox Selected',
           context: {'email': email, 'domain': _selectedDomain},
         );
+
+        // Navigate to Active Mailbox Page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ActiveMailboxPage()),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -721,6 +765,12 @@ class _HomeTabState extends State<HomeTab> {
             'email': email,
             'domain': _selectedDomain,
           },
+        );
+
+        // Navigate to Active Mailbox Page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ActiveMailboxPage()),
         );
       }
     } catch (e) {
@@ -762,6 +812,12 @@ class _HomeTabState extends State<HomeTab> {
             'domain': _selectedDomain,
           },
         );
+
+        // Navigate to Active Mailbox Page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ActiveMailboxPage()),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -780,33 +836,5 @@ class _HomeTabState extends State<HomeTab> {
     Clipboard.setData(ClipboardData(text: text));
     SnackbarService.showSuccess('Copied to clipboard: $text');
     AppLogger.userAction('Email Copied', context: {'email': text});
-  }
-
-  void _showClearConfirmDialog(EmailProvider emailProvider) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Current Mailbox'),
-        content: const Text(
-          'Are you sure you want to clear the current mailbox? This will remove the selected email and stop checking for new messages.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              emailProvider.clearSelectedEmail();
-              SnackbarService.showInfo('Mailbox cleared');
-              AppLogger.userAction('Mailbox Cleared');
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
-    );
   }
 }

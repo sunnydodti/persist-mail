@@ -5,7 +5,7 @@ import '../providers/email_provider.dart';
 import '../models/mailbox_history.dart';
 import '../services/snackbar_service.dart';
 import '../services/logging_service.dart';
-import 'mailbox_screen.dart';
+import 'active_mailbox_page.dart';
 
 class MailboxHistoryScreen extends StatelessWidget {
   const MailboxHistoryScreen({super.key});
@@ -68,8 +68,8 @@ class MailboxHistoryScreen extends StatelessWidget {
                     Text(
                       'Total Mailboxes',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -83,8 +83,8 @@ class MailboxHistoryScreen extends StatelessWidget {
                       Text(
                         'Current Mailbox',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Row(
@@ -92,17 +92,19 @@ class MailboxHistoryScreen extends StatelessWidget {
                           Expanded(
                             child: Text(
                               emailProvider.selectedEmail!,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.primary,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontWeight: FontWeight.w500,
                                   ),
                             ),
                           ),
                           IconButton(
                             icon: const Icon(Icons.copy, size: 18),
-                            onPressed: () => _copyToClipboard(
-                              emailProvider.selectedEmail!,
-                            ),
+                            onPressed: () =>
+                                _copyToClipboard(emailProvider.selectedEmail!),
                           ),
                         ],
                       ),
@@ -139,8 +141,8 @@ class MailboxHistoryScreen extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: isCurrentlySelected ? 3 : 1,
-      color: isCurrentlySelected 
-          ? Theme.of(context).colorScheme.primaryContainer 
+      color: isCurrentlySelected
+          ? Theme.of(context).colorScheme.primaryContainer
           : null,
       child: InkWell(
         onTap: () => _selectMailbox(context, mailbox, emailProvider),
@@ -158,10 +160,11 @@ class MailboxHistoryScreen extends StatelessWidget {
                       children: [
                         Text(
                           mailbox.email,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: isCurrentlySelected 
-                                    ? Theme.of(context).colorScheme.primary 
+                                color: isCurrentlySelected
+                                    ? Theme.of(context).colorScheme.primary
                                     : null,
                               ),
                         ),
@@ -170,8 +173,11 @@ class MailboxHistoryScreen extends StatelessWidget {
                           children: [
                             Text(
                               'Domain: ${mailbox.domain}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                             ),
                             const SizedBox(width: 16),
@@ -184,16 +190,22 @@ class MailboxHistoryScreen extends StatelessWidget {
                               const SizedBox(width: 4),
                               Text(
                                 '$emailCount cached emails',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.primary,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                       fontWeight: FontWeight.w500,
                                     ),
                               ),
                             ] else
                               Text(
                                 'No cached emails',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                                     ),
                               ),
                           ],
@@ -212,6 +224,9 @@ class MailboxHistoryScreen extends StatelessWidget {
                           break;
                         case 'view_emails':
                           _viewMailboxEmails(context, mailbox, emailProvider);
+                          break;
+                        case 'delete':
+                          _deleteMailbox(context, mailbox, emailProvider);
                           break;
                       }
                     },
@@ -247,6 +262,23 @@ class MailboxHistoryScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.delete,
+                              size: 18,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Delete Mailbox',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -263,8 +295,8 @@ class MailboxHistoryScreen extends StatelessWidget {
                   Text(
                     'Last used: ${_formatTimeAgo(mailbox.lastUsed)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const Spacer(),
                   Icon(
@@ -276,15 +308,18 @@ class MailboxHistoryScreen extends StatelessWidget {
                   Text(
                     'Created: ${_formatTimeAgo(mailbox.createdAt)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
               if (isCurrentlySelected) ...[
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(4),
@@ -292,9 +327,9 @@ class MailboxHistoryScreen extends StatelessWidget {
                   child: Text(
                     'Current',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -312,10 +347,16 @@ class MailboxHistoryScreen extends StatelessWidget {
   ) {
     emailProvider.selectEmail(mailbox.email, mailbox.domain);
     SnackbarService.showSuccess('Selected: ${mailbox.email}');
-    AppLogger.userAction('Mailbox Selected from History', context: {
-      'email': mailbox.email,
-      'domain': mailbox.domain,
-    });
+    AppLogger.userAction(
+      'Mailbox Selected from History',
+      context: {'email': mailbox.email, 'domain': mailbox.domain},
+    );
+
+    // Navigate to Active Mailbox Page
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ActiveMailboxPage()),
+    );
   }
 
   void _viewMailboxEmails(
@@ -325,11 +366,11 @@ class MailboxHistoryScreen extends StatelessWidget {
   ) {
     // First select the mailbox
     emailProvider.selectEmail(mailbox.email, mailbox.domain);
-    
-    // Then navigate to mailbox screen
+
+    // Then navigate to Active Mailbox Page
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MailboxScreen()),
+      MaterialPageRoute(builder: (context) => const ActiveMailboxPage()),
     );
   }
 
@@ -369,6 +410,54 @@ class MailboxHistoryScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteMailbox(
+    BuildContext context,
+    MailboxHistory mailbox,
+    EmailProvider emailProvider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Mailbox'),
+        content: Text(
+          'Are you sure you want to delete "${mailbox.email}"?\n\n'
+          'This will remove the mailbox from your history and delete all cached emails. '
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              try {
+                await emailProvider.deleteMailboxFromHistory(mailbox.email);
+                SnackbarService.showSuccess('Mailbox deleted successfully');
+                AppLogger.userAction(
+                  'Mailbox Deleted from History',
+                  context: {'email': mailbox.email, 'domain': mailbox.domain},
+                );
+              } catch (e) {
+                SnackbarService.showError(
+                  'Failed to delete mailbox: ${e.toString()}',
+                );
+                AppLogger.error(
+                  'Failed to delete mailbox: ${mailbox.email}',
+                  e,
+                );
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
       ),

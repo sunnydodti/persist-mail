@@ -170,11 +170,11 @@ class ApiService {
     try {
       AppLogger.debug('ApiService: Fetching email content for: $emailId');
       final response = await _dio.get('/email/$emailId');
-      
+
       AppLogger.info('ApiService: Email content fetched successfully', {
         'emailId': emailId,
       });
-      
+
       return EmailModel.fromJson(response.data);
     } on DioException catch (e) {
       AppLogger.error(
