@@ -31,4 +31,21 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """Health check endpoint for deployment verification."""
+    try:
+        from app.core.config import settings
+        return {
+            "status": "healthy",
+            "service": "PersistMail API",
+            "version": "2.0.0",
+            "environment": {
+                "database_configured": bool(settings.DATABASE_URL),
+                "mailcow_configured": bool(settings.MAILCOW_API_URL and settings.MAILCOW_API_KEY),
+                "domain_configured": bool(settings.MAIL_DOMAIN and settings.IMAP_HOST),
+            }
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e)
+        }
